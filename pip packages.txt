@@ -1,0 +1,5 @@
+The following pip packages are required for the scripts to run:
+tqdm
+protobuf
+seaborn
+numpy
