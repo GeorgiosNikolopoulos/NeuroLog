@@ -29,6 +29,21 @@ logLevels = [
     "error",
     "fatal"
 ]
+# Convert java.util.logging.Level to the rest of the levels (lose a log level, but its fine anyways)
+def standardiselogLevels(logLevel):
+    if logLevel == "severe":
+        return "fatal"
+    elif logLevel == "warning":
+        return "error"
+    elif logLevel == "config":
+        return "debug"
+    elif logLevel == "fine":
+        return "info"
+    elif logLevel == "finer" or logLevel == "finest":
+        return "trace"
+    else:
+        return logLevel
+
 # Detects LogBack (Spring) and Juli (Tomcat) and JBOSS (Hibernate)
 def detectLogs(graph):
     nodes = graph.node
@@ -42,6 +57,7 @@ def detectLogs(graph):
             severity = nodes[i + 2].contents
             # make it lower
             severity = severity.lower()
+            severity = standardiselogLevels(severity)
             # address jboss on this level instead of further down (makes life easier)
             severity = addressjBoss(severity)
             # verify the log level

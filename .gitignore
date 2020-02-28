@@ -1,3 +1,7 @@
+.idea/
 __pycache__/
+venv/
 *.pyc
 experiment.py
+retrieveLogsExperimental.py
+result.json
