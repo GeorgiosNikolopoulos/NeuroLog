@@ -29,7 +29,7 @@ logLevels = [
     "error",
     "fatal"
 ]
-# Detects LogBack (Spring) and Juli (Tomcat) and JBOSS (Hibernate)
+# Detects Log4j, LogBack,slf4j, Juli (Tomcat's custom implementation of java.util.logging) and Jboss (Hibernate)
 def detectLogs(graph):
     nodes = graph.node
     # Using while loop to keep track of array index (its required)
@@ -167,10 +167,10 @@ def main():
     #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\okhttp\\"
 
     #(16)Tomcat
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\tomcat\\"
+    path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\tomcat\\"
 
     # All of the corpus
-    path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\"
+    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\"
 
     # https://mkyong.com/python/python-how-to-list-all-files-in-a-directory/
     # Get all files within the directory of the path
@@ -183,8 +183,8 @@ def main():
             results = results + runAnalysis(f)
     else:
         # Use tqdm to dispay a nice progress bar, requires manual for loop instead of for f in files
-        for i in tqdm(range(len(files)), unit="files"):
-            results = results + runAnalysis(files[i])
+        for file in tqdm(files, unit="files"):
+            results = results + runAnalysis(file)
 
     for result in results:
         print(result)
