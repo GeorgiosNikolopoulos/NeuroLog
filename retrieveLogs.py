@@ -10,11 +10,12 @@ from graph_pb2 import FeatureNode
 verbose = False
 
 class Log:
-    def __init__(self, severity, msg, lineLoc, fileLoc):
+    def __init__(self, severity, msg, lineLoc, fileLoc,rootID):
         self.severity = severity
         self.msg = msg
         self.lineLoc = lineLoc
         self.fileLoc = fileLoc
+        self.rootId = rootID
 
     # Print the class correctly
     def __str__(self):
@@ -55,7 +56,8 @@ def detectLogs(graph):
                     fileLoc = fileLoc.replace('/local/data/Desktop/java-corpus-utils/java_projects-waiting/', '')
                     fileLoc = fileLoc.replace('/local/data/Desktop/java-corpus-utils/java_projects/', '')
                     lineLoc = node.startLineNumber
-                    log = Log(severity, msg, lineLoc, fileLoc)
+                    rootID = node.id
+                    log = Log(severity, msg, lineLoc, fileLoc, rootID)
                     results.append(log)
     return results
 
@@ -167,14 +169,15 @@ def main():
     #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\okhttp\\"
 
     #(16)Tomcat
-    path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\tomcat\\"
+    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\tomcat\\"
 
     # All of the corpus
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\"
+    path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\"
 
     # https://mkyong.com/python/python-how-to-list-all-files-in-a-directory/
     # Get all files within the directory of the path
     files = [f for f in glob.glob(path + "**/*.java.proto", recursive=True)]
+    print("Found " + str(len(files)) + " proto files, starting analysis...")
     results = []
 
     # if we are using verbose, don't display the bar (everything will print)
@@ -190,7 +193,7 @@ def main():
         print(result)
     print("Execution finished, number of logs found: " + str(len(results)))
     # Write to JSON
-    with open('result.json', 'w') as outfile:
+    with open('results/result.json', 'w') as outfile:
         json.dump([ob.__dict__ for ob in results],outfile)
     print("Data written to file!")
 

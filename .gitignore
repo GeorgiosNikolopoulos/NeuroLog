@@ -4,5 +4,5 @@ venv/
 *.pyc
 experiment.py
 retrieveLogsExperimental.py
-result.json
+results/result.json
 test.py

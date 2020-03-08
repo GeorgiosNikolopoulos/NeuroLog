@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='protobuf',
   syntax='proto2',
   serialized_options=b'\n$uk.ac.cam.acr31.features.javac.protoB\013GraphProtos',
-  serialized_pb=b'\n\x0bgraph.proto\x12\x08protobuf\"\xa6\x03\n\x0b\x46\x65\x61tureNode\x12\n\n\x02id\x18\x01 \x01(\x03\x12,\n\x04type\x18\x02 \x01(\x0e\x32\x1e.protobuf.FeatureNode.NodeType\x12\x10\n\x08\x63ontents\x18\x03 \x01(\t\x12\x15\n\rstartPosition\x18\x04 \x01(\x05\x12\x13\n\x0b\x65ndPosition\x18\x05 \x01(\x05\x12\x17\n\x0fstartLineNumber\x18\x06 \x01(\x05\x12\x15\n\rendLineNumber\x18\x07 \x01(\x05\"\xee\x01\n\x08NodeType\x12\t\n\x05TOKEN\x10\x01\x12\x0f\n\x0b\x41ST_ELEMENT\x10\x02\x12\x10\n\x0c\x43OMMENT_LINE\x10\x03\x12\x11\n\rCOMMENT_BLOCK\x10\x04\x12\x13\n\x0f\x43OMMENT_JAVADOC\x10\x05\x12\x14\n\x10IDENTIFIER_TOKEN\x10\x07\x12\x0c\n\x08\x46\x41KE_AST\x10\x08\x12\n\n\x06SYMBOL\x10\t\x12\x0e\n\nSYMBOL_TYP\x10\n\x12\x0e\n\nSYMBOL_VAR\x10\x0b\x12\x0e\n\nSYMBOL_MTH\x10\x0c\x12\x08\n\x04TYPE\x10\r\x12\x14\n\x10METHOD_SIGNATURE\x10\x0e\x12\x0c\n\x08\x41ST_LEAF\x10\x0f\"\xa0\x03\n\x0b\x46\x65\x61tureEdge\x12\x10\n\x08sourceId\x18\x01 \x01(\x03\x12\x15\n\rdestinationId\x18\x02 \x01(\x03\x12,\n\x04type\x18\x03 \x01(\x0e\x32\x1e.protobuf.FeatureEdge.EdgeType\"\xb9\x02\n\x08\x45\x64geType\x12\x14\n\x10\x41SSOCIATED_TOKEN\x10\x01\x12\x0e\n\nNEXT_TOKEN\x10\x02\x12\r\n\tAST_CHILD\x10\x03\x12\x08\n\x04NONE\x10\x04\x12\x0e\n\nLAST_WRITE\x10\x05\x12\x0c\n\x08LAST_USE\x10\x06\x12\x11\n\rCOMPUTED_FROM\x10\x07\x12\x0e\n\nRETURNS_TO\x10\x08\x12\x13\n\x0f\x46ORMAL_ARG_NAME\x10\t\x12\x0e\n\nGUARDED_BY\x10\n\x12\x17\n\x13GUARDED_BY_NEGATION\x10\x0b\x12\x14\n\x10LAST_LEXICAL_USE\x10\x0c\x12\x0b\n\x07\x43OMMENT\x10\r\x12\x15\n\x11\x41SSOCIATED_SYMBOL\x10\x0e\x12\x0c\n\x08HAS_TYPE\x10\x0f\x12\x11\n\rASSIGNABLE_TO\x10\x10\x12\x14\n\x10METHOD_SIGNATURE\x10\x11\"\xba\x01\n\x05Graph\x12#\n\x04node\x18\x01 \x03(\x0b\x32\x15.protobuf.FeatureNode\x12#\n\x04\x65\x64ge\x18\x02 \x03(\x0b\x32\x15.protobuf.FeatureEdge\x12\x12\n\nsourceFile\x18\x03 \x01(\t\x12*\n\x0b\x66irst_token\x18\x04 \x01(\x0b\x32\x15.protobuf.FeatureNode\x12\'\n\x08\x61st_root\x18\x05 \x01(\x0b\x32\x15.protobuf.FeatureNodeB3\n$uk.ac.cam.acr31.features.javac.protoB\x0bGraphProtos'
+  serialized_pb=b'\n\x0bgraph.proto\x12\x08protobuf\"\xaf\x03\n\x0b\x46\x65\x61tureNode\x12\n\n\x02id\x18\x01 \x01(\x03\x12,\n\x04type\x18\x02 \x01(\x0e\x32\x1e.protobuf.FeatureNode.NodeType\x12\x10\n\x08\x63ontents\x18\x03 \x01(\t\x12\x15\n\rstartPosition\x18\x04 \x01(\x05\x12\x13\n\x0b\x65ndPosition\x18\x05 \x01(\x05\x12\x17\n\x0fstartLineNumber\x18\x06 \x01(\x05\x12\x15\n\rendLineNumber\x18\x07 \x01(\x05\"\xf7\x01\n\x08NodeType\x12\t\n\x05TOKEN\x10\x01\x12\x0f\n\x0b\x41ST_ELEMENT\x10\x02\x12\x10\n\x0c\x43OMMENT_LINE\x10\x03\x12\x11\n\rCOMMENT_BLOCK\x10\x04\x12\x13\n\x0f\x43OMMENT_JAVADOC\x10\x05\x12\x14\n\x10IDENTIFIER_TOKEN\x10\x07\x12\x0c\n\x08\x46\x41KE_AST\x10\x08\x12\n\n\x06SYMBOL\x10\t\x12\x0e\n\nSYMBOL_TYP\x10\n\x12\x0e\n\nSYMBOL_VAR\x10\x0b\x12\x0e\n\nSYMBOL_MTH\x10\x0c\x12\x08\n\x04TYPE\x10\r\x12\x14\n\x10METHOD_SIGNATURE\x10\x0e\x12\x0c\n\x08\x41ST_LEAF\x10\x0f\x12\x07\n\x03LOG\x10\x11\"\xa0\x03\n\x0b\x46\x65\x61tureEdge\x12\x10\n\x08sourceId\x18\x01 \x01(\x03\x12\x15\n\rdestinationId\x18\x02 \x01(\x03\x12,\n\x04type\x18\x03 \x01(\x0e\x32\x1e.protobuf.FeatureEdge.EdgeType\"\xb9\x02\n\x08\x45\x64geType\x12\x14\n\x10\x41SSOCIATED_TOKEN\x10\x01\x12\x0e\n\nNEXT_TOKEN\x10\x02\x12\r\n\tAST_CHILD\x10\x03\x12\x08\n\x04NONE\x10\x04\x12\x0e\n\nLAST_WRITE\x10\x05\x12\x0c\n\x08LAST_USE\x10\x06\x12\x11\n\rCOMPUTED_FROM\x10\x07\x12\x0e\n\nRETURNS_TO\x10\x08\x12\x13\n\x0f\x46ORMAL_ARG_NAME\x10\t\x12\x0e\n\nGUARDED_BY\x10\n\x12\x17\n\x13GUARDED_BY_NEGATION\x10\x0b\x12\x14\n\x10LAST_LEXICAL_USE\x10\x0c\x12\x0b\n\x07\x43OMMENT\x10\r\x12\x15\n\x11\x41SSOCIATED_SYMBOL\x10\x0e\x12\x0c\n\x08HAS_TYPE\x10\x0f\x12\x11\n\rASSIGNABLE_TO\x10\x10\x12\x14\n\x10METHOD_SIGNATURE\x10\x11\"\xba\x01\n\x05Graph\x12#\n\x04node\x18\x01 \x03(\x0b\x32\x15.protobuf.FeatureNode\x12#\n\x04\x65\x64ge\x18\x02 \x03(\x0b\x32\x15.protobuf.FeatureEdge\x12\x12\n\nsourceFile\x18\x03 \x01(\t\x12*\n\x0b\x66irst_token\x18\x04 \x01(\x0b\x32\x15.protobuf.FeatureNode\x12\'\n\x08\x61st_root\x18\x05 \x01(\x0b\x32\x15.protobuf.FeatureNodeB3\n$uk.ac.cam.acr31.features.javac.protoB\x0bGraphProtos'
 )
 
 
@@ -85,11 +85,15 @@ _FEATURENODE_NODETYPE = _descriptor.EnumDescriptor(
       name='AST_LEAF', index=13, number=15,
       serialized_options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='LOG', index=14, number=17,
+      serialized_options=None,
+      type=None),
   ],
   containing_type=None,
   serialized_options=None,
   serialized_start=210,
-  serialized_end=448,
+  serialized_end=457,
 )
 _sym_db.RegisterEnumDescriptor(_FEATURENODE_NODETYPE)
 
@@ -170,8 +174,8 @@ _FEATUREEDGE_EDGETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=554,
-  serialized_end=867,
+  serialized_start=563,
+  serialized_end=876,
 )
 _sym_db.RegisterEnumDescriptor(_FEATUREEDGE_EDGETYPE)
 
@@ -246,7 +250,7 @@ _FEATURENODE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=26,
-  serialized_end=448,
+  serialized_end=457,
 )
 
 
@@ -291,8 +295,8 @@ _FEATUREEDGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=451,
-  serialized_end=867,
+  serialized_start=460,
+  serialized_end=876,
 )
 
 
@@ -350,8 +354,8 @@ _GRAPH = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=870,
-  serialized_end=1056,
+  serialized_start=879,
+  serialized_end=1065,
 )
 
 _FEATURENODE.fields_by_name['type'].enum_type = _FEATURENODE_NODETYPE
