@@ -1,4 +1,5 @@
 from graph_pb2 import Graph
+import graph_pb2
 from pathlib import Path
 import json
 
@@ -11,10 +12,10 @@ def main():
     with open(jsonPath, "rb") as jsonf:
         singleLog = json.load(jsonf)[0]
         modifiedGraph = modifyGraphFile(singleLog)
-        #out = open("test.java.proto", "wb")
-        #out.write(modifiedGraph.SerializeToString())
-        #out.close()
-        print(modifiedGraph.node)
+        out = open("test.java.proto", "wb")
+        out.write(modifiedGraph.SerializeToString())
+        out.close()
+
         jsonf.close()
 
 
@@ -29,7 +30,7 @@ def modifyGraphFile(log):
 
         # get all the relevant log nodes
         allLogNodes, baseNodeIndex, \
-        lastLogNodeIndex, lastNodeEndLineNumber, lastNodeEndPosition = retrieveAllLogsNodes(nodes, rootId)
+            lastLogNodeIndex, lastNodeEndLineNumber, lastNodeEndPosition = retrieveAllLogsNodes(nodes, rootId)
         # get the releant node ids
         allLogNodesIds = list(map(lambda node: node.id, allLogNodes))
 
@@ -38,22 +39,39 @@ def modifyGraphFile(log):
         # STEP 2) Modify any edge that links to one of our log nodes ( either so they originate from the source node
         # or that they point it now.)
         edges = adjustOutsideEdges(edges, allLogNodesIds)
-
+        # STEP 3) Modify all the log nodes. Modify root node to be special LOG node, delete rest.
         nodes = modifyNodes(nodes, baseNodeIndex, lastLogNodeIndex, lastNodeEndLineNumber, lastNodeEndPosition)
-        # edgeswithSourceLink = list(filter(lambda edge: edge.sourceId in allLogNodesIds, edges))
-        # edgeswithDestinationLink = list(filter(lambda edge: edge.destinationId in allLogNodesIds, edges))
-        # print(allLogNodesIds)
-        # print(edgeswithSourceLink)
-        # print(edgeswithDestinationLink)
+
+        # create a new Graph file to return for writing, using all the modified nodes and edges
+        returnGraph = Graph()
+        for node in nodes:
+            graphNode = graph_pb2.FeatureNode()
+            graphNode.id = node.id
+            graphNode.type = node.type
+            graphNode.contents = node.contents
+            graphNode.startPosition = node.startPosition
+            graphNode.endPosition = node.endPosition
+            graphNode.startLineNumber = node.startLineNumber
+            graphNode.endLineNumber = node.endLineNumber
+            # append our node to the new graph file
+            returnGraph.node.append(graphNode)
+        for edge in edges:
+            graphEdge = graph_pb2.FeatureEdge()
+            graphEdge.sourceId = edge.sourceId
+            graphEdge.destinationId = edge.destinationId
+            graphEdge.type = edge.type
+            # append our edge to the graph file
+            returnGraph.edge.append(graphEdge)
+
         graphFile.close()
-        return g
+        return returnGraph
 
 
 # Modify the nodes to remove the log statment and replace it with our special LOG type. Makes sure end position and
 # end line number match the last node
 def modifyNodes(nodes, baseNodeIndex, lastLogNodeIndex, lastNodeEndLineNumber, lastNodeEndPosition):
     del nodes[baseNodeIndex + 1: lastLogNodeIndex]
-    nodes[baseNodeIndex].type = 17
+    nodes[baseNodeIndex].type = 17  # LOG enum ID
     nodes[baseNodeIndex].contents = ""
     nodes[baseNodeIndex].endLineNumber = lastNodeEndLineNumber
     nodes[baseNodeIndex].endPosition = lastNodeEndPosition
