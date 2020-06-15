@@ -1,11 +1,9 @@
+import argparse
+
 from graph_pb2 import Graph
 import graph_pb2
 from pathlib import Path
 import json
-
-jsonPath = str(
-    Path("C:/Users/GN/Desktop/work/Uni/Masters/Dissertation/detecting-log-statements/results/all_projects.json"))
-corpusPath = str(Path("C:/Users/GN/Desktop/work/Uni/Masters/Dissertation/corpus/extracted/"))
 
 
 def main():
@@ -138,5 +136,15 @@ def retrieveAllLogsNodes(nodes, rootId):
 
 
 if __name__ == "__main__":
-    # main(sys.argv[1])
+    # use argparser to set up all argument parsing
+    parser = argparse.ArgumentParser(
+        description="Generates a new corpus of protobuff files containing modified graph structures. Does so by"
+                    "removing all log instances and re-creating the graph structure to leave no trace of a log's "
+                    "existance")
+    parser.add_argument("input_json", help="Location of json file. Please use full path",
+                        type=str)
+    parser.add_argument("corpus_location", help="Root folder location of the corpus used to generate the JSON")
+    args = parser.parse_args()
+    jsonPath = str(Path(args.input_json))
+    corpusPath = str(Path(args.corpus_location))
     main()
