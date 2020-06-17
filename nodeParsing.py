@@ -8,7 +8,9 @@ import json
 
 def main():
     with open(jsonPath, "rb") as jsonf:
-        singleLog = json.load(jsonf)[4]
+        logs = json.load(jsonf)
+        #generateCorpus(logs)
+        singleLog = logs[4]
         rootId = singleLog["rootId"]
         graphLocation = Path(corpusPath + "/" + singleLog["fileLoc"] + ".proto")
         with open(str(graphLocation), "rb") as graphFile:
@@ -132,6 +134,23 @@ def retrieveAllLogsNodes(nodes, rootId):
     allLogNodes = nodes[baseNodeIndex:lastNodeIndex]
 
     return allLogNodes, baseNodeIndex, lastNodeIndex, lastNodeEndLineNumber, lastNodeEndPosition
+
+"""
+Generate the entire new corpus file structure
+"""
+def generateCorpus(logs):
+    print("Generating new corpus file structure...", end="")
+    modifiedCorpus = Path("modified_corpus")
+    try:
+        modifiedCorpus.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        print("\nModified corpus already exists, please delete before executing")
+        exit(1)
+    for log in logs:
+        logPath = Path(log["fileLoc"])
+        corpusPath = modifiedCorpus / logPath.parents[0]
+        corpusPath.mkdir(parents=True, exist_ok=True)
+    print(" Done!")
 
 
 if __name__ == "__main__":
