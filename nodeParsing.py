@@ -8,16 +8,15 @@ import json
 
 def main():
     with open(jsonPath, "rb") as jsonf:
-        singleLog = json.load(jsonf)[0]
+        singleLog = json.load(jsonf)[4]
         rootId = singleLog["rootId"]
         graphLocation = Path(corpusPath + "/" + singleLog["fileLoc"] + ".proto")
         with open(str(graphLocation), "rb") as graphFile:
             modifiedGraph = modifyGraphFile(graphFile, rootId)
-            print(modifiedGraph.edge)
             graphFile.close()
-            #out = open("deleteme.java.proto", "wb")
-            #out.write(modifiedGraph.SerializeToString())
-            #out.close()
+            out = open("example.java.proto", "wb")
+            out.write(modifiedGraph.SerializeToString())
+            out.close()
 
         jsonf.close()
 

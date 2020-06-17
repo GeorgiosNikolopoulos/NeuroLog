@@ -6,3 +6,5 @@ experiment.py
 retrieveLogsExperimental.py
 results/result.json
 test.py
+*.proto
+*.dot
