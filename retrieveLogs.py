@@ -135,49 +135,6 @@ def verifyLogLevel(logLevel):
 
 
 def main():
-
-
-    # (0)Tester path
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\TEST\\"
-
-    # (2)All of cassandra
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\cassandra\\"
-
-    # (3)All of clojure
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\clojure\\"
-
-    # (4)All of dubbo
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\dubbo\\"
-
-    # (5)All of errorProne
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\errorprone\\"
-
-    # (6)All of grails
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\grails-core\\"
-
-    # (7) all of guice
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\guice\\"
-
-    # (9) jsoup
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\jsoup\\"
-
-    # (10) junit4
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\junit4\\"
-
-    # (11) kafka
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\kafka\\"
-
-    # (14) oktttp
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\okhttp\\"
-
-    # (16)Tomcat
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\tomcat\\"
-
-    # All of the corpus
-    # path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\"
-
-    #path = Path("/home/gn/Desktop/work/Uni/Masters/Dissertation/corpus/extracted/dubbo")
-
     # https://mkyong.com/python/python-how-to-list-all-files-in-a-directory/
     # Get all files within the directory of the path
     files = [f for f in glob.glob(str(path) + "/**/*.java.proto", recursive=True)]

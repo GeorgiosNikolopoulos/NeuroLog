@@ -1,6 +1,7 @@
 .idea/
 __pycache__/
 venv/
+modified_corpus/
 *.pyc
 experiment.py
 retrieveLogsExperimental.py

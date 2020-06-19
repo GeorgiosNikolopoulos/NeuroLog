@@ -1,26 +1,56 @@
 import argparse
-
+import shutil
 from graph_pb2 import Graph
 import graph_pb2
 from pathlib import Path
 import json
+from tqdm import tqdm
 
 
 def main():
+    # open the json
     with open(jsonPath, "rb") as jsonf:
+        modifiedCorpusPath = Path("modified_corpus", ignore_errors=True, onerror=None)
+        # get the logs, make the file strucutre
         logs = json.load(jsonf)
-        #generateCorpus(logs)
-        singleLog = logs[4]
-        rootId = singleLog["rootId"]
-        graphLocation = Path(corpusPath + "/" + singleLog["fileLoc"] + ".proto")
-        with open(str(graphLocation), "rb") as graphFile:
-            modifiedGraph = modifyGraphFile(graphFile, rootId)
-            graphFile.close()
-            out = open("example.java.proto", "wb")
-            out.write(modifiedGraph.SerializeToString())
-            out.close()
+        #debug execution to generate a single graph
+        if args.debug:
+            modifiedCorpusPath.mkdir(parents=True, exist_ok=True)
+            print("Debug mode active, using log element at index", args.debug)
+            singleLog = logs[args.debug]
+            rootId = singleLog["rootId"]
+            graphLocation = Path(corpusPath + "/" + singleLog["fileLoc"] + ".proto")
+            print("Using graph at:", graphLocation)
+            with open(graphLocation, "rb") as graphFile:
+                modifiedGraph = modifyGraphFile(graphFile, rootId)
+                output = modifiedCorpusPath / graphLocation.name
+                print("Writing new graph at", output)
+                with open(output, "wb") as out:
+                    out.write(modifiedGraph.SerializeToString())
+                print("Done!")
+        # proper corpus generation
+        else:
+            generateCorpus(logs, modifiedCorpusPath)
+            print("Starting graph modification")
+            # For each log...
+            for log in tqdm(logs, unit="logs"):
+                # get the graph location, the root ID and the output path
+                rootId = log["rootId"]
+                graphLocation = Path(corpusPath + "/" + log["fileLoc"] + ".proto")
+                outputPath = modifiedCorpusPath / Path(log["fileLoc"] + ".proto")
+                # if the output file exists (so the original file was already used once, meaning that the original
+                # has at least 2 logs).
+                # Reuse the OUTPUT graph file, so it does not overwrite the previous logs
+                if outputPath.is_file():
+                    graphLocation = outputPath
+                # open the input graph
+                with open(graphLocation, "rb") as graphFile:
+                    # Do the hard work modifying it
+                    modifiedGraph = modifyGraphFile(graphFile, rootId)
+                    # write it back out, overwriting the old file
+                    with open(outputPath, "wb") as out:
+                        out.write(modifiedGraph.SerializeToString())
 
-        jsonf.close()
 
 
 def modifyGraphFile(graphFile, rootId):
@@ -135,20 +165,24 @@ def retrieveAllLogsNodes(nodes, rootId):
 
     return allLogNodes, baseNodeIndex, lastNodeIndex, lastNodeEndLineNumber, lastNodeEndPosition
 
-"""
-Generate the entire new corpus file structure
-"""
-def generateCorpus(logs):
+
+# Generate the entire new corpus file structure. Currently unused
+def generateCorpus(logs, modifiedCorpusPath):
+    if args.delete:
+        try:
+            print("Deleting old modified corpus")
+            shutil.rmtree(modifiedCorpusPath)
+        except FileNotFoundError:
+            pass
     print("Generating new corpus file structure...", end="")
-    modifiedCorpus = Path("modified_corpus")
     try:
-        modifiedCorpus.mkdir(parents=True, exist_ok=False)
+        modifiedCorpusPath.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
         print("\nModified corpus already exists, please delete before executing")
         exit(1)
     for log in logs:
         logPath = Path(log["fileLoc"])
-        corpusPath = modifiedCorpus / logPath.parents[0]
+        corpusPath = modifiedCorpusPath / logPath.parents[0]
         corpusPath.mkdir(parents=True, exist_ok=True)
     print(" Done!")
 
@@ -156,12 +190,15 @@ def generateCorpus(logs):
 if __name__ == "__main__":
     # use argparser to set up all argument parsing
     parser = argparse.ArgumentParser(
-        description="Generates a new corpus of protobuff files containing modified graph structures. Does so by"
+        description="Generates a new corpus of protobuff files containing modified graph structures. Does so by "
                     "removing all log instances and re-creating the graph structure to leave no trace of a log's "
-                    "existance")
+                    "existence, except a unique LOG node.")
     parser.add_argument("input_json", help="Location of json file. Please use full path",
                         type=str)
     parser.add_argument("corpus_location", help="Root folder location of the corpus used to generate the JSON")
+    parser.add_argument("-d", "--delete", help="If a modified corpus exists, delete it", action="store_true")
+    parser.add_argument("--debug", help=" Generate a single graph file, to check the graph output. Takes an integer,"
+                                        "pointing to an element of the input json array.",type=int)
     args = parser.parse_args()
     jsonPath = str(Path(args.input_json))
     corpusPath = str(Path(args.corpus_location))
