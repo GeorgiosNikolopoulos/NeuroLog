@@ -11,17 +11,21 @@ def main():
     # open the json
     with open(jsonPath, "rb") as jsonf:
         modifiedCorpusPath = Path("modified_corpus", ignore_errors=True, onerror=None)
-        # get the logs, make the file strucutre
+        # get the logs, make the file structure
         logs = json.load(jsonf)
         #debug execution to generate a single graph
         if args.debug:
+            # Generate output directory (its ok if it does not exist)
             modifiedCorpusPath.mkdir(parents=True, exist_ok=True)
             print("Debug mode active, using log element at index", args.debug)
+            # get the single log to use from the args
             singleLog = logs[args.debug]
             rootId = singleLog["rootId"]
+            # form the correct graph location
             graphLocation = Path(corpusPath + "/" + singleLog["fileLoc"] + ".proto")
             print("Using graph at:", graphLocation)
             with open(graphLocation, "rb") as graphFile:
+                # modify the graph
                 modifiedGraph = modifyGraphFile(graphFile, rootId)
                 output = modifiedCorpusPath / graphLocation.name
                 print("Writing new graph at", output)
@@ -30,6 +34,7 @@ def main():
                 print("Done!")
         # proper corpus generation
         else:
+            # generate the copy of the relevant corpus file structure
             generateCorpus(logs, modifiedCorpusPath)
             print("Starting graph modification")
             # For each log...
@@ -176,13 +181,18 @@ def generateCorpus(logs, modifiedCorpusPath):
             pass
     print("Generating new corpus file structure...", end="")
     try:
+        # make the main output directory
         modifiedCorpusPath.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
         print("\nModified corpus already exists, please delete before executing")
         exit(1)
+    # For every log...
     for log in logs:
+        # get the path
         logPath = Path(log["fileLoc"])
+        # form the new output folder structure
         corpusPath = modifiedCorpusPath / logPath.parents[0]
+        # write it, its ok if it exists (as we can have multiple logs per file)
         corpusPath.mkdir(parents=True, exist_ok=True)
     print(" Done!")
 
