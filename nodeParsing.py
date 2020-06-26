@@ -84,7 +84,8 @@ def modifyGraphFile(graphFile, rootId):
         graphNode = graph_pb2.FeatureNode()
         graphNode.id = node.id
         graphNode.type = node.type
-        graphNode.contents = node.contents
+        test = removeImportLeaks(node.contents)
+        graphNode.contents = removeImportLeaks(node.contents)
         graphNode.startPosition = node.startPosition
         graphNode.endPosition = node.endPosition
         graphNode.startLineNumber = node.startLineNumber
@@ -101,7 +102,13 @@ def modifyGraphFile(graphFile, rootId):
 
     graphFile.close()
     return returnGraph
+# Removes any potential leaks of log levels at import statements.
+def removeImportLeaks(content):
+    if "." in content and "log" in content and " " not in content:
+        if "trace" in content or "debug" in content or "info" in content or "error" in content or "fatal" in content:
+            return " "
 
+    return content
 
 # Modify the nodes to remove the log statment and replace it with our special LOG type. Makes sure end position and
 # end line number match the last node
