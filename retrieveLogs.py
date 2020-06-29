@@ -1,5 +1,3 @@
-import os
-import sys
 import glob
 import json
 from tqdm import tqdm
@@ -7,7 +5,6 @@ from pathlib import Path
 import argparse
 
 from graph_pb2 import Graph
-from graph_pb2 import FeatureNode
 
 
 
@@ -36,12 +33,15 @@ logLevels = [
 
 # Detects Log4j, LogBack,slf4j, Juli (Tomcat's custom implementation of java.util.logging) and Jboss (Hibernate)
 def detectLogs(graph):
+    # get all the nodes of the graph
     nodes = graph.node
-    # Using while loop to keep track of array index (its required)
     results = []
     length = len(nodes)
+    # uses i beacause we need the element location as well as the element. Could have used enumerate but I didn't for
+    # some reason
     for i in range(length):
         node = nodes[i]
+        # our node has some mention of a log
         if node.contents == "logger" or node.contents == "log" or node.contents == "LOG":
             # get the log level by moving down two elements in the array (DOT followed by the level)
             severity = nodes[i + 2].contents
@@ -84,7 +84,7 @@ def convertContentToString(content):
         return content
 
 
-# Isolate the msg from the nodes provided
+# Isolate the msg from the nodes provided (start of logging statement to semicolon)
 def isolateMsg(nodes, startOfStatement):
     # get the nodes STARTING at the msg
     startNodes = nodes[startOfStatement:]
@@ -92,7 +92,7 @@ def isolateMsg(nodes, startOfStatement):
     endLocation = 0
     for i in range(length):
         node = startNodes[i]
-        # found a semicolon, statemnt is over
+        # found a semicolon, statement is over
         if node.contents == "SEMI":
             # go back an element from the semicolon
             endLocation = i - 1
@@ -139,7 +139,7 @@ def main():
     # Get all files within the directory of the path
     files = [f for f in glob.glob(str(path) + "/**/*.java.proto", recursive=True)]
     if len(files) == 0:
-        print("No java.proto files found, are you inputing a correct folder?")
+        print("No java.proto files found, are you imputing a correct folder?")
         exit(0)
     print("Found " + str(len(files)) + " proto files, starting analysis...")
     results = []
@@ -149,7 +149,7 @@ def main():
         for f in files:
             results = results + runAnalysis(f)
     else:
-        # Use tqdm to dispay a nice progress bar, requires manual for loop instead of for f in files
+        # Use tqdm to display a nice progress bar, requires manual for loop instead of for f in files
         for file in tqdm(files, unit="files"):
             results = results + runAnalysis(file)
     if verbose:

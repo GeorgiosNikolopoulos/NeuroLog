@@ -15,6 +15,7 @@ def main():
             f.write("digraph G {\n")
             # for each node, write out the node with the contents as its label
             for node in g.node:
+                # the first line writes the node type as the label, the second the node contents. Second is better.
                 # f.write(str(node.id) + ' [ label="' + toNodeText(node) + '" ];\n')
                 f.write(str(node.id) + ' [ label="' + re.escape(node.contents) + '" ];\n')
                 if (toNodeText(node) == "LOG"):

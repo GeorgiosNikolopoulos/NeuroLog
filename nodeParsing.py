@@ -13,7 +13,7 @@ def main():
         modifiedCorpusPath = Path("modified_corpus", ignore_errors=True, onerror=None)
         # get the logs, make the file structure
         logs = json.load(jsonf)
-        #debug execution to generate a single graph
+        # debug execution to generate a single graph
         if args.debug:
             # Generate output directory (its ok if it does not exist)
             modifiedCorpusPath.mkdir(parents=True, exist_ok=True)
@@ -55,7 +55,6 @@ def main():
                     # write it back out, overwriting the old file
                     with open(outputPath, "wb") as out:
                         out.write(modifiedGraph.SerializeToString())
-
 
 
 def modifyGraphFile(graphFile, rootId):
@@ -102,6 +101,8 @@ def modifyGraphFile(graphFile, rootId):
 
     graphFile.close()
     return returnGraph
+
+
 # Removes any potential leaks of log levels at import statements.
 def removeImportLeaks(content):
     if "." in content and "log" in content and " " not in content:
@@ -109,6 +110,7 @@ def removeImportLeaks(content):
             return " "
 
     return content
+
 
 # Modify the nodes to remove the log statment and replace it with our special LOG type. Makes sure end position and
 # end line number match the last node
@@ -148,7 +150,7 @@ def removeLogEdges(edges, nodeIds):
     edges = list(filter(filterEdges, edges))
     return edges
 
-
+# analyzes all nodes of a graph, returning the nodes that contain the logging statement
 def retrieveAllLogsNodes(nodes, rootId):
     baseNodeIndex = 0
     discoveredLogNode = False
@@ -215,8 +217,8 @@ if __name__ == "__main__":
     parser.add_argument("corpus_location", help="Root folder location of the corpus used to generate the JSON")
     parser.add_argument("-d", "--delete", help="If a modified corpus exists, delete it", action="store_true")
     parser.add_argument("--debug", help=" Generate a single graph file, to check the graph output. Takes an integer,"
-                                        "pointing to an element of the input json array.",type=int)
+                                        "pointing to an element of the input json array.", type=int)
     args = parser.parse_args()
-    jsonPath = str(Path(args.input_json))
+    jsonPath = Path(args.input_json)
     corpusPath = str(Path(args.corpus_location))
     main()

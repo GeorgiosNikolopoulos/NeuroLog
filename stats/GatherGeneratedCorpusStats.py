@@ -1,6 +1,5 @@
 import argparse
 from graph_pb2 import Graph
-import graph_pb2
 import json
 from pathlib import Path
 from tqdm import tqdm
@@ -11,7 +10,7 @@ def main():
         logs = json.load(json_file)
         calculateImportLeaks(logs)
 
-
+# Examines how many log levels are "leaked" as imports
 def calculateImportLeaks(logs):
     graphLocs = map(lambda log: corpusLocation / Path(log["fileLoc"] + ".proto"), logs)
     # remove duplicates
