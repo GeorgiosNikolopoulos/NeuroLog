@@ -6,9 +6,8 @@ import random
 
 from graph_pb2 import Graph
 
-corpusLocation = "/home/gn/Desktop/work/Uni/Masters/Dissertation/detecting-log-statements/modified_corpus"
-jsonLocation = "/home/gn/Desktop/work/Uni/Masters/Dissertation/detecting-log-statements/results/all_projects.json"
-
+corpusLocation = Path().absolute() / "modified_corpus"
+jsonLocation = Path().absolute() / "results/all_projects.json"
 
 class TestGraphGeneration(unittest.TestCase):
     # Read the logs at the start
@@ -49,8 +48,8 @@ class TestGraphGeneration(unittest.TestCase):
                     # got the correct node
                     if node.id == log["rootId"]:
                         # Make sure its the special LOG and that the roots match
-                        self.assertTrue(node.type == 17)
-                        self.assertTrue(node.id == log["rootId"])
+                        self.assertEqual(node.type, 17)
+                        self.assertEqual(node.id, log["rootId"])
 
     # Tests a few graphs to verify that no edges either originate or point to the nodes that were removed
     # during the nodeParsing procedure

@@ -77,7 +77,7 @@ def calculateMsgStatistics(logs):
     print("-----------------------------------------------")
     print("Logs that have text only in their msg: " + str(len(onlyTextLogs)) + " (" + str(
         round((len(onlyTextLogs) / len(logs) * 100), 2)) + "%) of the whole data")
-    print("Logs that have a method in their msg:" + str(len(onlyMethodLogs)) + " (" + str(
+    print("Logs that have a method in their msg: " + str(len(onlyMethodLogs)) + " (" + str(
         round((len(onlyMethodLogs) / len(logs) * 100), 2)) + "%) of the whole data")
 
 
@@ -107,45 +107,24 @@ def filterByMsgTextOnly(log):
 # filter by log level methods follow
 
 def filterByTrace(log):
-    if log['severity'] == "trace":
-        return True
-    else:
-        return False
-
+    return log['severity'] == "trace"
 
 def filterByDebug(log):
-    if log['severity'] == "debug":
-        return True
-    else:
-        return False
+    return log['severity'] == "debug"
 
 
 def filterByInfo(log):
-    if log['severity'] == "info":
-        return True
-    else:
-        return False
-
+    return log['severity'] == "info"
 
 def filterByWarn(log):
-    if log['severity'] == "warn":
-        return True
-    else:
-        return False
-
+    return log['severity'] == "warn"
 
 def filterByError(log):
-    if log['severity'] == "error":
-        return True
-    else:
-        return False
+    return log['severity'] == "error"
 
 
 def filterByFatal(log):
-    if log['severity'] == "fatal":
-        return True
-    else:
-        return False
+    return log['severity'] == "fatal"
 
 
 if __name__ == "__main__":
