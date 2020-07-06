@@ -71,8 +71,8 @@ def modifyGraphFile(graphFile, rootId):
 
     # STEP 1) Remove any edge that both originates and targets nodes within our log statment
     edges = removeLogEdges(edges, allLogNodesIds)
-    # STEP 2) Modify any edge that links to one of our log nodes ( either so they originate from the source node
-    # or that they point it now.)
+    # STEP 2) Modify any edge that links to one of our log nodes within the statement. These edges will now point to the
+    # root LOG node.
     edges = adjustOutsideEdges(edges, allLogNodesIds)
     # STEP 3) Modify all the log nodes. Modify root node to be special LOG node, delete rest.
     nodes = modifyNodes(nodes, baseNodeIndex, lastLogNodeIndex, lastNodeEndLineNumber, lastNodeEndPosition)
@@ -83,7 +83,6 @@ def modifyGraphFile(graphFile, rootId):
         graphNode = graph_pb2.FeatureNode()
         graphNode.id = node.id
         graphNode.type = node.type
-        test = removeImportLeaks(node.contents)
         graphNode.contents = removeImportLeaks(node.contents)
         graphNode.startPosition = node.startPosition
         graphNode.endPosition = node.endPosition
