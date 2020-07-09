@@ -1,20 +1,20 @@
-import os
-import sys
 import glob
 import json
 from tqdm import tqdm
+from pathlib import Path
+import argparse
 
 from graph_pb2 import Graph
-from graph_pb2 import FeatureNode
-#Display lots of info
-verbose = False
+
+
 
 class Log:
-    def __init__(self, severity, msg, lineLoc, fileLoc):
+    def __init__(self, severity, msg, lineLoc, fileLoc, rootID):
         self.severity = severity
         self.msg = msg
         self.lineLoc = lineLoc
         self.fileLoc = fileLoc
+        self.rootId = rootID
 
     # Print the class correctly
     def __str__(self):
@@ -29,41 +29,30 @@ logLevels = [
     "error",
     "fatal"
 ]
-# Convert java.util.logging.Level to the rest of the levels (loose a log level, but its fine anyways)
-def standardiselogLevels(logLevel):
-    if logLevel == "severe":
-        return "fatal"
-    elif logLevel == "warning":
-        return "error"
-    elif logLevel == "config":
-        return "debug"
-    elif logLevel == "fine":
-        return "info"
-    elif logLevel == "finer" or logLevel == "finest":
-        return "trace"
-    else:
-        return logLevel
 
-# Detects LogBack (Spring) and Juli (Tomcat) and JBOSS (Hibernate)
+
+# Detects Log4j, LogBack,slf4j, Juli (Tomcat's custom implementation of java.util.logging) and Jboss (Hibernate)
 def detectLogs(graph):
+    # get all the nodes of the graph
     nodes = graph.node
-    # Using while loop to keep track of array index (its required)
     results = []
     length = len(nodes)
+    # uses i beacause we need the element location as well as the element. Could have used enumerate but I didn't for
+    # some reason
     for i in range(length):
         node = nodes[i]
+        # our node has some mention of a log
         if node.contents == "logger" or node.contents == "log" or node.contents == "LOG":
             # get the log level by moving down two elements in the array (DOT followed by the level)
             severity = nodes[i + 2].contents
             # make it lower
             severity = severity.lower()
-            severity = standardiselogLevels(severity)
             # address jboss on this level instead of further down (makes life easier)
             severity = addressjBoss(severity)
             # verify the log level
             if verifyLogLevel(severity):
                 # isolate the message
-                msg = isolateMsg(nodes,i + 4)
+                msg = isolateMsg(nodes, i + 4)
                 # Avoid false positives. If they occur, then the ENTIRE file (10k+ nodes) gets written.
                 if len(msg) <= 1500:
                     fileLoc = graph.sourceFile
@@ -71,12 +60,13 @@ def detectLogs(graph):
                     fileLoc = fileLoc.replace('/local/data/Desktop/java-corpus-utils/java_projects-waiting/', '')
                     fileLoc = fileLoc.replace('/local/data/Desktop/java-corpus-utils/java_projects/', '')
                     lineLoc = node.startLineNumber
-                    log = Log(severity, msg, lineLoc, fileLoc)
+                    rootID = node.id
+                    log = Log(severity, msg, lineLoc, fileLoc, rootID)
                     results.append(log)
     return results
 
 
-#Converts the graph content markets into their respective string
+# Converts the graph content markets into their respective string
 def convertContentToString(content):
     if content == "PLUS":
         return " + "
@@ -94,7 +84,7 @@ def convertContentToString(content):
         return content
 
 
-# Isolate the msg from the nodes provided
+# Isolate the msg from the nodes provided (start of logging statement to semicolon)
 def isolateMsg(nodes, startOfStatement):
     # get the nodes STARTING at the msg
     startNodes = nodes[startOfStatement:]
@@ -102,15 +92,15 @@ def isolateMsg(nodes, startOfStatement):
     endLocation = 0
     for i in range(length):
         node = startNodes[i]
-        # found a semicolon, statemnt is over
-        if node.contents =="SEMI":
+        # found a semicolon, statement is over
+        if node.contents == "SEMI":
             # go back an element from the semicolon
             endLocation = i - 1
             break
     # grab the nodes that contain the statement
-    statementNodes = startNodes[0 : endLocation]
+    statementNodes = startNodes[0: endLocation]
     msg = ""
-    #Extract the msg and return it
+    # Extract the msg and return it
     for node in statementNodes:
         msg = msg + convertContentToString(node.contents)
     return msg
@@ -134,6 +124,7 @@ def addressjBoss(logLevel):
     else:
         return logLevel
 
+
 # Verify there is a valid log level
 def verifyLogLevel(logLevel):
     # content is one of the log levels (and not a function, ex logger.isInfoEnabled())
@@ -143,54 +134,14 @@ def verifyLogLevel(logLevel):
         return False
 
 
-
 def main():
-
-
-    #(0)Tester path
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\TEST\\"
-
-
-
-    #(2)All of cassandra
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\cassandra\\"
-
-    #(3)All of clojure
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\clojure\\"
-
-    #(4)All of dubbo
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\dubbo\\"
-
-    #(5)All of errorProne
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\errorprone\\"
-
-    #(6)All of grails
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\grails-core\\"
-
-    #(7) all of guice
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\guice\\"
-
-    #(9) jsoup
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\jsoup\\"
-
-    #(10) junit4
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\junit4\\"
-
-    #(11) kafka
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\kafka\\"
-
-    #(14) oktttp
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\okhttp\\"
-
-    #(16)Tomcat
-    #path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\tomcat\\"
-
-    # All of the corpus
-    path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\corpus\\extracted\\"
-
     # https://mkyong.com/python/python-how-to-list-all-files-in-a-directory/
     # Get all files within the directory of the path
-    files = [f for f in glob.glob(path + "**/*.java.proto", recursive=True)]
+    files = [f for f in glob.glob(str(path) + "/**/*.java.proto", recursive=True)]
+    if len(files) == 0:
+        print("No java.proto files found, are you imputing a correct folder?")
+        exit(0)
+    print("Found " + str(len(files)) + " proto files, starting analysis...")
     results = []
 
     # if we are using verbose, don't display the bar (everything will print)
@@ -198,17 +149,30 @@ def main():
         for f in files:
             results = results + runAnalysis(f)
     else:
-        # Use tqdm to dispay a nice progress bar, requires manual for loop instead of for f in files
-        for i in tqdm(range(len(files)), unit="files"):
-            results = results + runAnalysis(files[i])
-
-    for result in results:
-        print(result)
+        # Use tqdm to display a nice progress bar, requires manual for loop instead of for f in files
+        for file in tqdm(files, unit="files"):
+            results = results + runAnalysis(file)
+    if verbose:
+        for result in results:
+            print(result)
     print("Execution finished, number of logs found: " + str(len(results)))
+
     # Write to JSON
-    with open('result.json', 'w') as outfile:
-        json.dump([ob.__dict__ for ob in results],outfile)
+    if args.name is None:
+        outputName = "result"
+    else:
+        outputName = args.name
+
+    if args.output is None:
+        print("No output location specified, writing to script location")
+        output = outputName + ".json"
+    else:
+        output = str(Path(args.output)) + "/" + outputName + ".json"
+
+    with open(output, 'w') as outfile:
+        json.dump([ob.__dict__ for ob in results], outfile)
     print("Data written to file!")
+
 
 def runAnalysis(fileLocation):
     with open(fileLocation, "rb") as f:
@@ -224,5 +188,13 @@ def runAnalysis(fileLocation):
 
 
 if __name__ == "__main__":
-    # main(sys.argv[1])
+    # use argparser to set up all argument parsing
+    parser = argparse.ArgumentParser(description="Detect log statements in java protocol buffer files")
+    parser.add_argument("input_folder", help="Root folder containing all protocol buffer files. Please use full path", type=str)
+    parser.add_argument("-o", "--output", help="Output folder to write to, will default to script location", type=str)
+    parser.add_argument("-v", "--verbose", help="Enable verbose mode", action="store_true")
+    parser.add_argument("-n", "--name", help="Name of output JSON file. Do not include extension")
+    args = parser.parse_args()
+    verbose = args.verbose
+    path = Path(args.input_folder)
     main()

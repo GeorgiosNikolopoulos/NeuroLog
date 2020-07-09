@@ -1,12 +1,13 @@
 import glob
 import json
 import os
+from pathlib import Path
+import argparse
+
 
 def main():
-    #Path of results
-    path = "C:\\Users\\GN\\Desktop\\work\\Uni\\Masters\\Dissertation\\detecting-log-statements\\results\\individual_results"
     # Grab all the files
-    files = [f for f in glob.glob(path + "**/*.json", recursive=True)]
+    files = [f for f in glob.glob(str(path) + "**/*.json", recursive=True)]
     for fileLocation in files:
         with open(fileLocation, "rb") as f:
             # Get the file name (removing the rest of the directory)
@@ -70,4 +71,11 @@ def filterByFatal(log):
 
 
 if __name__ == "__main__":
+    # use argparser to set up all argument parsing
+    parser = argparse.ArgumentParser(description="Analyze a set of generated JSON files to see the amount of log statements found per JSON file")
+    parser.add_argument("input_folder", help="Root folder containing all generated JSON files. Please use full path",
+                        type=str)
+
+    args = parser.parse_args()
+    path = Path(args.input_folder)
     main()
