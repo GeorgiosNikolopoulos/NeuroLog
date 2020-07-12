@@ -37,24 +37,17 @@ def main():
             # generate the copy of the relevant corpus file structure
             generateCorpus(logs, modifiedCorpusPath)
             print("Starting graph modification")
-            # new dictionary containing our filenames and how many times the file has been opened, used in file naming
-            fileDict = {}
-            # dictionary containing each file with its corresponding correct log level
-            levelArray = []
             # For each log...
             for log in tqdm(logs, unit="logs"):
                 # get the graph location, the root ID and the output path
                 rootId = log["rootId"]
                 graphLocation = Path(corpusPath + "/" + log["fileLoc"] + ".proto")
-                outputPathStr = log["fileLoc"].replace(".java", "")
-                if outputPathStr in fileDict:
-                    fileDict[outputPathStr] += 1
-                else:
-                    fileDict[outputPathStr] = 1
-
-                outputPath = modifiedCorpusPath / Path(outputPathStr + f"{str(fileDict[outputPathStr])}.java.proto")
-                levelArray.append([str(outputPath), log["severity"]])
-                #levelDict[str(outputPath)] = log["severity"]
+                outputPath = modifiedCorpusPath / Path(log["fileLoc"] + ".proto")
+                # if the output file exists (so the original file was already used once, meaning that the original
+                # has at least 2 logs).
+                # Reuse the OUTPUT graph file, so it does not overwrite the previous logs
+                if outputPath.is_file():
+                    graphLocation = outputPath
                 # open the input graph
                 with open(graphLocation, "rb") as graphFile:
                     # Do the hard work modifying it
@@ -62,11 +55,6 @@ def main():
                     # write it back out, overwriting the old file
                     with open(outputPath, "wb") as out:
                         out.write(modifiedGraph.SerializeToString())
-
-            print("Finished writing graph files")
-            with open(modifiedCorpusPath / "severities.json", "w") as outJSON:
-                json.dump(levelArray, outJSON)
-                print("Wrote severities.json. Contains each graph and it's corresponding log level.")
 
 
 def modifyGraphFile(graphFile, rootId):
@@ -161,7 +149,6 @@ def removeLogEdges(edges, nodeIds):
     edges = list(filter(filterEdges, edges))
     return edges
 
-
 # analyzes all nodes of a graph, returning the nodes that contain the logging statement
 def retrieveAllLogsNodes(nodes, rootId):
     baseNodeIndex = 0
@@ -224,7 +211,7 @@ if __name__ == "__main__":
         description="Generates a new corpus of protobuff files containing modified graph structures. Does so by "
                     "removing all log instances and re-creating the graph structure to leave no trace of a log's "
                     "existence, except a unique LOG node.")
-    parser.add_argument("input_json", help="Location of json file.",
+    parser.add_argument("input_json", help="Location of json file. Please use full path",
                         type=str)
     parser.add_argument("corpus_location", help="Root folder location of the corpus used to generate the JSON")
     parser.add_argument("-d", "--delete", help="If a modified corpus exists, delete it", action="store_true")

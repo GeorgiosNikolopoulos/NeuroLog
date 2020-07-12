@@ -1,3 +1,4 @@
+import glob
 import json
 import unittest
 from collections import Counter
@@ -14,6 +15,10 @@ class TestGraphGeneration(unittest.TestCase):
     def setUp(self):
         with open(jsonLocation, "rb") as jsonf:
             self.logs = json.load(jsonf)
+
+    def test_number_of_logs(self):
+        files = [f for f in glob.glob(str(corpusLocation) + "/**/*.java.proto", recursive=True)]
+        self.assertEqual(len(files), len(self.logs))
 
     # Verify that no logs get Lost when the new corpus is generated via nodeParsing.py. So, if two logs were
     # detected in retrieveLogs.py script (and were written in the JSON), then 2 special nodes of LOG should be

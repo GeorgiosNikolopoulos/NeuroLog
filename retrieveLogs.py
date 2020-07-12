@@ -190,7 +190,7 @@ def runAnalysis(fileLocation):
 if __name__ == "__main__":
     # use argparser to set up all argument parsing
     parser = argparse.ArgumentParser(description="Detect log statements in java protocol buffer files")
-    parser.add_argument("input_folder", help="Root folder containing all protocol buffer files. Please use full path", type=str)
+    parser.add_argument("input_folder", help="Root folder containing all protocol buffer files.", type=str)
     parser.add_argument("-o", "--output", help="Output folder to write to, will default to script location", type=str)
     parser.add_argument("-v", "--verbose", help="Enable verbose mode", action="store_true")
     parser.add_argument("-n", "--name", help="Name of output JSON file. Do not include extension")
