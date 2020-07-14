@@ -1,3 +1,4 @@
+import re
 import shutil
 from enum import Enum
 
@@ -9,7 +10,7 @@ from tqdm import tqdm
 import gzip
 import numpy as np
 
-
+# Class to help with Edge name conversion
 class EdgeType(Enum):
     ASSOCIATED_TOKEN = 1
     NEXT_TOKEN = 2
@@ -33,7 +34,7 @@ class EdgeType(Enum):
 def main():
     # open our JSON
     with open(inputJSON) as jsonf:
-        # load the log dict
+        # load the logs
         logs = json.load(jsonf)
         # we're debugging
         if args.debug is not None:
@@ -42,14 +43,19 @@ def main():
             severity = logs[args.debug][1]
             print(convertGraph(graphLoc, severity))
         else:
+            # set up the output Paths
             outputTrainLogs = outputFolder / "trainLogs.jsonl"
             outputValidationLogs = outputFolder / "validationLogs.jsonl"
             outputTestLogs = outputFolder / "testLogs.jsonl"
+            # limit our log count
             if args.limit is not None:
                 logs = logs[0:args.limit]
+            # split the logs into our sets
             trainLogs, validationLogs, testLogs = splitLogs(logs)
-            print(f"Split the data into: {len(trainLogs)} training logs, {len(validationLogs)} validation logs and {len(testLogs)} test logs!")
+            print(
+                f"Split the data into: {len(trainLogs)} training logs, {len(validationLogs)} validation logs and {len(testLogs)} test logs!")
             print("Starting generation of training set.")
+            # Each  block handles calculating and writing of it's respective set to a jsonl file
             with open(outputTrainLogs, "w") as outFile:
                 for [graphLoc, severity] in tqdm(trainLogs, unit="logs"):
                     result = convertGraph(graphLoc, severity)
@@ -95,7 +101,36 @@ def splitLogs(logs):
     logs = np.array(logs)
     trainData, testData = np.split(logs, [int(args.training_percent * len(logs))])
     trainData, validationData = np.split(trainData, [int(1.0 - args.validation_percent * len(logs))])
-    # TODO no logs belonging to the same file should be split across the sets. HANDLE THIS. Also think about the percent
+
+    # The following 2 blocks will automaticly ensure that two logs belonging to the same file are not
+    # split across two sets (either train-validate or validate-test
+    trainDataAdjusted = False
+    validationDataAdjusted = False
+    # while we are still adjusting
+    while not trainDataAdjusted:
+        # get the last file name of the train set...
+        lastTrainFileName = re.sub("\d+", "", Path(trainData[-1][0]).name)
+        # ...and the first file name of the validate set
+        firstValidateFileName = re.sub("\d+", "", Path(validationData[0][0]).name)
+        # if the name match (we've removed numbers)
+        if lastTrainFileName in firstValidateFileName:
+            # stack the train data tuple with the first element of the validation data tuple
+            trainData = np.vstack((trainData, validationData[0]))
+            # Remove the first element of hte validation tuple
+            validationData = validationData[1:]
+        # if teh names do not match, we are good to go!
+        else:
+            trainDataAdjusted = True
+    # Same logic as above, only for the validate-test sets
+    while not validationDataAdjusted:
+        lastValidateFileName = re.sub("\d+", "", Path(validationData[-1][0]).name)
+        firstTestFileName = re.sub("\d+", "", Path(testData[0][0]).name)
+        if lastValidateFileName in firstTestFileName:
+            validationData = np.vstack((validationData, testData[0]))
+            testData = testData[1:]
+        else:
+            validationDataAdjusted = True
+    # shuffle everything!
     np.random.shuffle(trainData)
     np.random.shuffle(validationData)
     np.random.shuffle(testData)
@@ -125,7 +160,7 @@ def convertGraph(graphLoc, severity):
             # STEP 2) Create node_labels by appending the node contents to the array
             returnJSON["node_labels"].append(node.contents)
         # STEP 3) Create edges by parsing the edge data into the correct format
-        returnJSON["edges"] = convertEdges(edges)
+        returnJSON["edges"] = convertEdges(nodes, edges)
         # STEP 4) Add the correct level that the AI should predict
         returnJSON["method_name"].append(severity)
         return json.dumps(returnJSON)
@@ -139,13 +174,23 @@ def nodeIsBackbone(node, edges):
     return len(nextTokenEdges) != 0
 
 
-def convertEdges(edges):
+def convertEdges(nodes, edges):
     returnDict = {}
     for edge in edges:
         type = EdgeType(edge.type).name
         if type not in returnDict:
             returnDict[type] = []
-        returnDict[type].append([edge.sourceId, edge.destinationId])
+        # returnDict[type].append([edge.sourceId, edge.destinationId])
+        sourceIndex = -1
+        destinationIndex = -1
+        for index, node in enumerate(nodes):
+            if node.id == edge.sourceId:
+                sourceIndex = index
+            if node.id == edge.destinationId:
+                destinationIndex = index
+            if sourceIndex != -1 and destinationIndex != -1:
+                break
+        returnDict[type].append([sourceIndex, destinationIndex])
     return returnDict
 
 
@@ -160,7 +205,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--limit", help="Limit the number of logs to use from the JSON by x logs. A value of 100"
                                               "will only take the first 100 logs and split them in the train/validation/"
                                               "test sets.", type=int)
-    parser.add_argument("-c","--convert", help="GZip the generated jsonl files to prepare them for Graph2Sequence",
+    parser.add_argument("-c", "--convert", help="GZip the generated jsonl files to prepare them for Graph2Sequence",
                         action="store_true")
     parser.add_argument("training_percent", help="The percent of data that will be the training data (ex. 0.8). The "
                                                  "other 20 will be testing data",
