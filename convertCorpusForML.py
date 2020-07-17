@@ -58,19 +58,19 @@ def main():
             # Each  block handles calculating and writing of it's respective set to a jsonl file
             with open(outputTrainLogs, "w") as outFile:
                 for [graphLoc, severity] in tqdm(trainLogs, unit="logs"):
-                    result = convertGraph(inputFolder + graphLoc, severity)
+                    result = convertGraph(graphLoc, severity)
                     outFile.write(result)
                     outFile.write("\n")
             print("Done. Starting generation of validation set.")
             with open(outputValidationLogs, "w") as outFile:
                 for [graphLoc, severity] in tqdm(validationLogs, unit="logs"):
-                    result = convertGraph(inputFolder + graphLoc, severity)
+                    result = convertGraph(graphLoc, severity)
                     outFile.write(result)
                     outFile.write("\n")
             print("Done. Starting generation of testing set.")
             with open(outputTestLogs, "w") as outFile:
                 for [graphLoc, severity] in tqdm(testLogs):
-                    result = convertGraph(inputFolder + graphLoc, severity)
+                    result = convertGraph(graphLoc, severity)
                     outFile.write(result)
                     outFile.write("\n")
             # Handle auto-zipping of generated files
@@ -94,9 +94,19 @@ def main():
                 print("All done! Please remember to gzip these files before feeding them into graphToSequence")
                 print("If on linux, please run 'gzip -k trainLogs.jsonl && gzip -k validationLogs.jsonl && gzip -k "
                       "testLogs.jsonl'")
-
+            if amlCTX is not None:
+                amlCTX.upload_file(name="trainLogs.json.gz", path_or_stream=str(outputFolder / "trainLogs.jsonl.gz"))
+                amlCTX.upload_file(name="validationLogs.jsonl.gz", path_or_stream=str(outputFolder / "validationLogs.jsonl.gz"))
+                amlCTX.upload_file(name="testLogs.jsonl.gz", path_or_stream=str(outputFolder / "testLogs.jsonl.gz"))
 
 def splitLogs(logs):
+    if amlCTX is not None:
+        def modifyLogs(log):
+            graphLoc, severity = log
+            return [graphLoc.replace("modified_corpus/", args.corpus_location), severity]
+        logs = list(map(modifyLogs, logs))
+
+
     # Use numpy to split our arrays into the correct percentage
     logs = np.array(logs)
     trainData, testData = np.split(logs, [int(args.training_percent * len(logs))])
@@ -197,8 +207,8 @@ def convertEdges(nodes, edges):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Converts the generated modified corpus into the jsonl.gz file accepted by ptgnn.")
-    parser.add_argument("input_json", help="Location of the modified corpus JSON file.",
-                        type=str)
+    parser.add_argument("--corpus_location", help="Location of the modified corpus JSON file.",
+                        type=str, required=True)
     parser.add_argument("--debug", help="Generate a single json file from a single proto file, to check the script's "
                                         "functionality. Takes an index location of the JSON file",
                         type=int)
@@ -207,19 +217,20 @@ if __name__ == "__main__":
                                               "test sets.", type=int)
     parser.add_argument("-c", "--convert", help="GZip the generated jsonl files to prepare them for Graph2Sequence",
                         action="store_true")
-    parser.add_argument("training_percent", help="The percent of data that will be the training data (ex. 0.8). The "
+    parser.add_argument("--training_percent", help="The percent of data that will be the training data (ex. 0.8). The "
                                                  "other 20 will be testing data",
-                        type=float)
-    parser.add_argument("validation_percent", help="The percent of the TRAINING data that will be the validation set"
+                        type=float, required=True)
+    parser.add_argument("--validation_percent", help="The percent of the TRAINING data that will be the validation set"
                                                    "(ex. a 0.8 0.2 will take 20% of the TRAINING set, which is 80% of "
                                                    "the whole data)",
                         type=float)
-    parser.add_argument("output_folder", help="Output folder", type=str)
-    parser.add_argument("--aml_folder", help="Point to a folder in AzureML, to be used with the SDK", type=str)
+    parser.add_argument("--output_folder", help="Output folder", type=str, required=True)
+    parser.add_argument("--aml", help="Indicate usage of Azure", action="store_true")
     args = parser.parse_args()
-    inputJSON = Path(args.input_json)
+    inputJSON = Path(args.corpus_location) / "severities.json"
     outputFolder = Path(args.output_folder)
-    inputFolder = ""
-    if args.aml_folder:
-        inputFolder = args.aml_folder
+    amlCTX = None
+    if args.aml:
+        from azureml.core.run import Run
+        amlCTX = Run.get_context()
     main()

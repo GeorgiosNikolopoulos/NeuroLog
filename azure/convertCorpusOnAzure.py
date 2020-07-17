@@ -1,61 +1,65 @@
 import json
-from pathlib import Path
 import shutil
-from azureml.core import Workspace, ComputeTarget, Dataset
-from azureml.data.data_reference import DataReference
-from azureml.pipeline.core import PipelineData
-from azureml.pipeline.steps import EstimatorStep
-from azureml.train.estimator import Estimator
-from azureml.pipeline.core import Pipeline
-from azureml.core import Experiment
+from pathlib import Path
 
+from azureml.core import Experiment
+from azureml.core import Workspace, ComputeTarget
+from azureml.train.estimator import Estimator
+
+# Ger our configs
 with open("ptgnn/authentication.json") as jsonFile:
     authData = json.load(jsonFile)["CPU"]
 
+# Copy the convertCorpus script here. Done so we don't upload the corpus to Azure. (It's weird, I know. It works so
+# don't question it)
 convertCorpusLocation = Path("../convertCorpusForML.py")
 convertCorpusAzureLocation = Path("./convertCorpusForML.py")
 shutil.copy(convertCorpusLocation, convertCorpusAzureLocation)
 
+# Grab the authentication data from the JSON file
 subID = authData["subID"]  # Get from Azure Portal; used for billing
 resGroup = authData["resGroup"]  # Name for the resource group
 wsName = authData["wsName"]  # Name for the workspace, which is the collection of compute clusters + experiments
 computeName = authData["computeName"]  # Name for computer cluster
 
+# Get the workspace, the compute target and the datastore
 ws = Workspace.get(wsName, subscription_id=subID, resource_group=resGroup)
 computeTarget = ComputeTarget(ws, computeName)
 datastore = ws.get_default_datastore()
 
-inputData = DataReference(
-    datastore=datastore,
-    data_reference_name="input_data",
-    path_on_datastore="corpus/severities.json"
-)
-inputCorpus = DataReference(
-    datastore=datastore,
-    data_reference_name="input_corpus",
-    path_on_datastore="corpus/"
-)
-
-output = PipelineData("outputs", datastore=datastore)
+# Download the entire corpus to the compute target. Save the DataReference obj here
+# as_mount is also possible, but slows things down due to network opening of files
+corpus_location = datastore.path("data/modified_corpus/").as_download()
+output_location = "./"
+# The files that will be uploaded for usage by our script (everything in the azure folder)
 source_directory = "."
 
+# params for the script
+params = {
+    "--corpus_location": corpus_location,
+    "--output_folder": output_location,
+    "--aml": "",
+    "--training_percent": "0.8",
+    "--validation_percent": "0.2",
+    "-l": "300",
+    "-c": ""
+}
+# Set up the estimator object. Note the inputs element, it tells azure that corpus_location in params
+# will be a DataReference Object.
 est = Estimator(source_directory=source_directory,
                 compute_target=computeTarget,
                 entry_script='convertCorpusForML.py',
+                script_params=params,
+                inputs=[corpus_location],
                 conda_packages=["pip"],
                 pip_packages=["azureml-core", "tqdm", "numpy", "protobuf"],
                 use_docker=True,
                 use_gpu=False)
-
-estStep = EstimatorStep(name="Estimator_Train",
-                        estimator=est,
-                        estimator_entry_script_arguments=[inputData, 0.8, 0.2, output, "--aml_folder", inputCorpus,
-                                                          "-l", 10],
-                        runconfig_pipeline_params=None,
-                        inputs=[inputData, inputCorpus],
-                        outputs=[output],
-                        compute_target=computeTarget)
-
-pipeline = Pipeline(workspace=ws, steps=[estStep])
-run = Experiment(ws, 'Convert_Corpus').submit(pipeline)
-run.wait_for_completion(show_output=True)
+# Start the experiment
+run = Experiment(ws, 'Convert_Corpus').submit(config=est)
+# remove the copy of convertCorpus (Remember, don't question this)
+convertCorpusAzureLocation.unlink()
+# print out the portral URL
+print("Portal URL: ", run.get_portal_url())
+# this will stream everything that the compute target does.
+#run.wait_for_completion(show_output=True)
