@@ -58,19 +58,19 @@ def main():
             # Each  block handles calculating and writing of it's respective set to a jsonl file
             with open(outputTrainLogs, "w") as outFile:
                 for [graphLoc, severity] in tqdm(trainLogs, unit="logs"):
-                    result = convertGraph(graphLoc, severity)
+                    result = convertGraph(inputFolder + graphLoc, severity)
                     outFile.write(result)
                     outFile.write("\n")
             print("Done. Starting generation of validation set.")
             with open(outputValidationLogs, "w") as outFile:
                 for [graphLoc, severity] in tqdm(validationLogs, unit="logs"):
-                    result = convertGraph(graphLoc, severity)
+                    result = convertGraph(inputFolder + graphLoc, severity)
                     outFile.write(result)
                     outFile.write("\n")
             print("Done. Starting generation of testing set.")
             with open(outputTestLogs, "w") as outFile:
                 for [graphLoc, severity] in tqdm(testLogs):
-                    result = convertGraph(graphLoc, severity)
+                    result = convertGraph(inputFolder + graphLoc, severity)
                     outFile.write(result)
                     outFile.write("\n")
             # Handle auto-zipping of generated files
@@ -215,7 +215,11 @@ if __name__ == "__main__":
                                                    "the whole data)",
                         type=float)
     parser.add_argument("output_folder", help="Output folder", type=str)
+    parser.add_argument("--aml_folder", help="Point to a folder in AzureML, to be used with the SDK", type=str)
     args = parser.parse_args()
     inputJSON = Path(args.input_json)
     outputFolder = Path(args.output_folder)
+    inputFolder = ""
+    if args.aml_folder:
+        inputFolder = args.aml_folder
     main()
