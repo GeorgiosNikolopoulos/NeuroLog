@@ -6,12 +6,14 @@ from azureml.core import Experiment
 from azureml.core import Workspace, ComputeTarget
 from azureml.train.estimator import Estimator
 
+numLogs = "1000"
+
 # Ger our configs
 with open("ptgnn/authentication.json") as jsonFile:
     authData = json.load(jsonFile)["CPU"]
 
-# Copy the convertCorpus script here. Done so we don't upload the corpus to Azure. (It's weird, I know. It works so
-# don't question it)
+# Copy the convertCorpus script here. Done so we don't upload the corpus to Azure, or keep a copy of the script in here.
+# (It's weird, I know. It works and has a purpose though)
 convertCorpusLocation = Path("../convertCorpusForML.py")
 convertCorpusAzureLocation = Path("./convertCorpusForML.py")
 shutil.copy(convertCorpusLocation, convertCorpusAzureLocation)
@@ -41,7 +43,7 @@ params = {
     "--aml": "",
     "--training_percent": "0.8",
     "--validation_percent": "0.2",
-    "-l": "300",
+    "-l": numLogs,
     "-c": ""
 }
 # Set up the estimator object. Note the inputs element, it tells azure that corpus_location in params
@@ -56,10 +58,10 @@ est = Estimator(source_directory=source_directory,
                 use_docker=True,
                 use_gpu=False)
 # Start the experiment
-run = Experiment(ws, 'Convert_Corpus').submit(config=est)
+run = Experiment(ws, 'Convert_Corpus_ASYNC').submit(config=est, tags={"logs": numLogs})
 # remove the copy of convertCorpus (Remember, don't question this)
 convertCorpusAzureLocation.unlink()
 # print out the portral URL
 print("Portal URL: ", run.get_portal_url())
 # this will stream everything that the compute target does.
-#run.wait_for_completion(show_output=True)
+run.wait_for_completion(show_output=True)

@@ -1,7 +1,7 @@
 import re
 import shutil
 from enum import Enum
-
+import multiprocessing
 from graph_pb2 import Graph
 import argparse
 from pathlib import Path
@@ -9,6 +9,8 @@ import json
 from tqdm import tqdm
 import gzip
 import numpy as np
+import concurrent.futures
+
 
 # Class to help with Edge name conversion
 class EdgeType(Enum):
@@ -54,37 +56,22 @@ def main():
             trainLogs, validationLogs, testLogs = splitLogs(logs)
             print(
                 f"Split the data into: {len(trainLogs)} training logs, {len(validationLogs)} validation logs and {len(testLogs)} test logs!")
+            print(f"Will use {multiprocessing.cpu_count()} of threads (should be 1 per CPU available)")
+
             print("Starting generation of training set.")
-            # Each  block handles calculating and writing of it's respective set to a jsonl file
-            with open(outputTrainLogs, "w") as outFile:
-                for [graphLoc, severity] in tqdm(trainLogs, unit="logs"):
-                    result = convertGraph(graphLoc, severity)
-                    outFile.write(result)
-                    outFile.write("\n")
+            convertLogsAsync(trainLogs, outputTrainLogs)
+
             print("Done. Starting generation of validation set.")
-            with open(outputValidationLogs, "w") as outFile:
-                for [graphLoc, severity] in tqdm(validationLogs, unit="logs"):
-                    result = convertGraph(graphLoc, severity)
-                    outFile.write(result)
-                    outFile.write("\n")
+            convertLogsAsync(validationLogs, outputValidationLogs)
+
             print("Done. Starting generation of testing set.")
-            with open(outputTestLogs, "w") as outFile:
-                for [graphLoc, severity] in tqdm(testLogs):
-                    result = convertGraph(graphLoc, severity)
-                    outFile.write(result)
-                    outFile.write("\n")
+            convertLogsAsync(testLogs, outputTestLogs)
             # Handle auto-zipping of generated files
             if args.convert:
                 print("Zipping into gz format.")
-                with open(outputTrainLogs, 'rb') as f_in:
-                    with gzip.open(outputFolder / "trainLogs.jsonl.gz", 'wb') as f_out:
-                        shutil.copyfileobj(f_in, f_out)
-                with open(outputValidationLogs, 'rb') as f_in:
-                    with gzip.open(outputFolder / "validationLogs.jsonl.gz", 'wb') as f_out:
-                        shutil.copyfileobj(f_in, f_out)
-                with open(outputTestLogs, 'rb') as f_in:
-                    with gzip.open(outputFolder / "testLogs.jsonl.gz", 'wb') as f_out:
-                        shutil.copyfileobj(f_in, f_out)
+                zipJSONL(outputTrainLogs, "trainLogs.jsonl.gz")
+                zipJSONL(outputValidationLogs, "validationLogs.jsonl.gz")
+                zipJSONL(outputTestLogs, "testLogs.jsonl.gz")
                 print("Done. Deleting raw jsonl files.")
                 outputTrainLogs.unlink()
                 outputValidationLogs.unlink()
@@ -96,16 +83,49 @@ def main():
                       "testLogs.jsonl'")
             if amlCTX is not None:
                 amlCTX.upload_file(name="trainLogs.json.gz", path_or_stream=str(outputFolder / "trainLogs.jsonl.gz"))
-                amlCTX.upload_file(name="validationLogs.jsonl.gz", path_or_stream=str(outputFolder / "validationLogs.jsonl.gz"))
+                amlCTX.upload_file(name="validationLogs.jsonl.gz",
+                                   path_or_stream=str(outputFolder / "validationLogs.jsonl.gz"))
                 amlCTX.upload_file(name="testLogs.jsonl.gz", path_or_stream=str(outputFolder / "testLogs.jsonl.gz"))
+
+
+def convertLogsAsync(logs, outputFile):
+    with concurrent.futures.ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+        with tqdm(total=len(logs)) as progress:
+            futures = []
+            for [graphLoc, severity] in logs:
+                future = executor.submit(convertGraph, graphLoc, severity)
+                future.add_done_callback(lambda p: progress.update())
+                futures.append(future)
+            results = []
+            for future in futures:
+                result = future.result()
+                results.append(result)
+        # better way to handle async execution, but no progress bar!
+        #results = list(executor.map(convertFromGraphs, logs))
+    with open(outputFile, "w") as outFile:
+        for jsonLog in results:
+            outFile.write(jsonLog)
+            outFile.write("\n")
+
+
+def convertFromGraphs(log):
+    graphLoc, severity = log
+    return convertGraph(graphLoc, severity)
+
+
+def zipJSONL(location, targetName):
+    with open(location, 'rb') as f_in:
+        with gzip.open(outputFolder / targetName, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
 
 def splitLogs(logs):
     if amlCTX is not None:
         def modifyLogs(log):
             graphLoc, severity = log
             return [graphLoc.replace("modified_corpus/", args.corpus_location), severity]
-        logs = list(map(modifyLogs, logs))
 
+        logs = list(map(modifyLogs, logs))
 
     # Use numpy to split our arrays into the correct percentage
     logs = np.array(logs)
@@ -209,22 +229,22 @@ if __name__ == "__main__":
         description="Converts the generated modified corpus into the jsonl.gz file accepted by ptgnn.")
     parser.add_argument("--corpus_location", help="Location of the modified corpus JSON file.",
                         type=str, required=True)
+    parser.add_argument("--training_percent", help="The percent of data that will be the training data (ex. 0.8). The "
+                                                   "other 20 will be testing data",
+                        type=float, required=True)
+    parser.add_argument("--validation_percent", help="The percent of the TRAINING data that will be the validation set"
+                                                     "(ex. a 0.8 0.2 will take 20%% of the TRAINING set, which is 80%% of "
+                                                     "the whole data)",
+                        type=float, required=True)
     parser.add_argument("--debug", help="Generate a single json file from a single proto file, to check the script's "
                                         "functionality. Takes an index location of the JSON file",
                         type=int)
+    parser.add_argument("--output_folder", help="Output folder", type=str, required=True)
     parser.add_argument("-l", "--limit", help="Limit the number of logs to use from the JSON by x logs. A value of 100"
                                               "will only take the first 100 logs and split them in the train/validation/"
                                               "test sets.", type=int)
     parser.add_argument("-c", "--convert", help="GZip the generated jsonl files to prepare them for Graph2Sequence",
                         action="store_true")
-    parser.add_argument("--training_percent", help="The percent of data that will be the training data (ex. 0.8). The "
-                                                 "other 20 will be testing data",
-                        type=float, required=True)
-    parser.add_argument("--validation_percent", help="The percent of the TRAINING data that will be the validation set"
-                                                   "(ex. a 0.8 0.2 will take 20% of the TRAINING set, which is 80% of "
-                                                   "the whole data)",
-                        type=float)
-    parser.add_argument("--output_folder", help="Output folder", type=str, required=True)
     parser.add_argument("--aml", help="Indicate usage of Azure", action="store_true")
     args = parser.parse_args()
     inputJSON = Path(args.corpus_location) / "severities.json"
@@ -232,5 +252,6 @@ if __name__ == "__main__":
     amlCTX = None
     if args.aml:
         from azureml.core.run import Run
+
         amlCTX = Run.get_context()
     main()
