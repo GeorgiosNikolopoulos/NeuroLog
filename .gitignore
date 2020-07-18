@@ -2,7 +2,9 @@
 __pycache__/
 venv/
 modified_corpus/
-ptgnn/
+#ptgnn/
+ptgnn/authentication.json
+ptgnn/azureinfo.json
 *.pyc
 experiment.py
 retrieveLogsExperimental.py
