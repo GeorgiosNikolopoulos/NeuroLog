@@ -49,6 +49,13 @@ def main():
     }
     if args.log_num is not None:
         params["-l"] = args.log_num
+        tags = {
+            "logs": str(args.log_num)
+        }
+    else:
+        tags = {
+            "logs": "MAX"
+        }
     # Set up the estimator object. Note the inputs element, it tells azure that corpus_location in params
     # will be a DataReference Object.
     est = Estimator(source_directory=source_directory,
@@ -61,11 +68,11 @@ def main():
                     use_docker=True,
                     use_gpu=False)
     # Start the experiment
-    run = Experiment(ws, args.exp_name).submit(config=est, tags={"logs": str(args.log_num)})
+    run = Experiment(ws, args.exp_name).submit(config=est, tags=tags)
     # remove the copy of convertCorpus (Remember, don't question this)
     convertCorpusAzureLocation.unlink()
     # print out the portral URL
-    #print("Portal URL: ", run.get_portal_url())
+    # print("Portal URL: ", run.get_portal_url())
     # this will stream everything that the compute target does.
     print("Experiment Started. Remember you can exit out of this program but the experiment will still run on Azure!")
     run.wait_for_completion(show_output=True)
