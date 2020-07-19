@@ -5,10 +5,11 @@ modified_corpus/
 #ptgnn/
 azure/ptgnn/authentication.json
 azure/ptgnn/azureinfo.json
+azure/ptgnn/runOnAzureBroken.py
 *.pyc
 experiment.py
 retrieveLogsExperimental.py
 results/result.json
-test.py
+developmentest.py
 *.proto
 *.dot

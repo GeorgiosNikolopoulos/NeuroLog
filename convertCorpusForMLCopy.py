@@ -83,7 +83,7 @@ def main():
                 print("If on linux, please run 'gzip -k trainLogs.jsonl && gzip -k validationLogs.jsonl && gzip -k "
                       "testLogs.jsonl'")
             if amlCTX is not None:
-                amlCTX.upload_file(name="trainLogs.jsonl.gz", path_or_stream=str(outputFolder / "trainLogs.jsonl.gz"))
+                amlCTX.upload_file(name="trainLogs.json.gz", path_or_stream=str(outputFolder / "trainLogs.jsonl.gz"))
                 amlCTX.upload_file(name="validationLogs.jsonl.gz",
                                    path_or_stream=str(outputFolder / "validationLogs.jsonl.gz"))
                 amlCTX.upload_file(name="testLogs.jsonl.gz", path_or_stream=str(outputFolder / "testLogs.jsonl.gz"))
@@ -210,19 +210,22 @@ def nodeIsBackbone(node, edges):
 
 
 def convertEdges(nodes, edges):
-    IdIndexDict = {}
-    for index, node in enumerate(nodes):
-        IdIndexDict[node.id] = index
-
     returnDict = {}
     for edge in edges:
         type = EdgeType(edge.type).name
         if type not in returnDict:
             returnDict[type] = []
-        sourceIndex = IdIndexDict[edge.sourceId]
-        destinationIndex = IdIndexDict[edge.destinationId]
+        # returnDict[type].append([edge.sourceId, edge.destinationId])
+        sourceIndex = -1
+        destinationIndex = -1
+        for index, node in enumerate(nodes):
+            if node.id == edge.sourceId:
+                sourceIndex = index
+            if node.id == edge.destinationId:
+                destinationIndex = index
+            if sourceIndex != -1 and destinationIndex != -1:
+                break
         returnDict[type].append([sourceIndex, destinationIndex])
-
     return returnDict
 
 
