@@ -43,7 +43,9 @@ def main():
             # get the single graph and convert it.
             graphLoc = logs[args.debug][0]
             severity = logs[args.debug][1]
-            print(convertGraph(graphLoc, severity))
+            msg = logs[args.debug][2]
+            print(graphLoc)
+            print(convertGraph(graphLoc, severity, msg))
         else:
             # set up the output Paths
             outputTrainLogs = outputFolder / "trainLogs.jsonl"
@@ -95,9 +97,9 @@ def convertLogsAsync(logs, outputFile):
         # Manual tqdm implementation so we have a progress bar
         with tqdm(total=len(logs)) as progress:
             futures = []
-            for [graphLoc, severity] in logs:
+            for [graphLoc, severity, msg] in logs:
                 # here is where we convert the graph
-                future = executor.submit(convertGraph, graphLoc, severity)
+                future = executor.submit(convertGraph, graphLoc, severity, msg)
                 future.add_done_callback(lambda p: progress.update())
                 futures.append(future)
             results = []
@@ -127,8 +129,8 @@ def zipJSONL(location, targetName):
 def splitLogs(logs):
     if amlCTX is not None:
         def modifyLogs(log):
-            graphLoc, severity = log
-            return [graphLoc.replace("modified_corpus/", args.corpus_location), severity]
+            graphLoc, severity, msg = log
+            return [graphLoc.replace("modified_corpus/", args.corpus_location), severity, msg]
 
         logs = list(map(modifyLogs, logs))
 
@@ -172,58 +174,63 @@ def splitLogs(logs):
     return trainData, validationData, testData
 
 
-def convertGraph(graphLoc, severity):
+def convertGraph(graphLoc, severity, msg):
     # return JSON structure visualized.
     returnJSON = {
         "backbone_sequence": [],
         "node_labels": [],
         "edges": {},
-        "method_name": []
+        "method_name": [],
+        "msg" : "",
+        "log_node" : -1
     }
     with open(graphLoc, "rb") as graphFile:
         g = Graph()
         g.ParseFromString(graphFile.read())
         nodes = g.node
         edges = g.edge
-
+        # make a map of all the backbone nodes by looping over the edges and getting any node that
+        # has a NEXT_TOKEN pointing to/from it
+        backboneNodes = { }
+        for edge in edges:
+            if edge.type == 2:
+                # overwrite, but thats ok!
+                backboneNodes[edge.destinationId] = True
+                backboneNodes[edge.sourceId] = True
+        # Map of nodeId->Index. Used in step 3
+        IdIndexDict = {}
+        # Used to get the index of our special node to put it to the JSON
+        specialLogNodeIndex = -1
         for index, node in enumerate(nodes):
+            # got the special node
+            if node.type == 17:
+                specialLogNodeIndex = index
+            # add the node's index to the id map
+            IdIndexDict[node.id] = index
             # STEP 1) Create backbone_sequence by first checking if the node is a backbone node and then appending its
             # index to the array
-            if nodeIsBackbone(node, edges):
+            if node.id in backboneNodes:
                 returnJSON["backbone_sequence"].append(index)
 
             # STEP 2) Create node_labels by appending the node contents to the array
             returnJSON["node_labels"].append(node.contents)
         # STEP 3) Create edges by parsing the edge data into the correct format
-        returnJSON["edges"] = convertEdges(nodes, edges)
+        returnDict = {}
+        for edge in edges:
+            type = EdgeType(edge.type).name
+            if type not in returnDict:
+                returnDict[type] = []
+            sourceIndex = IdIndexDict[edge.sourceId]
+            destinationIndex = IdIndexDict[edge.destinationId]
+            returnDict[type].append([sourceIndex, destinationIndex])
+        returnJSON["edges"] = returnDict
         # STEP 4) Add the correct level that the AI should predict
         returnJSON["method_name"].append(severity)
+        # STEP 5) Add the log msg to our JSON
+        returnJSON["msg"] = msg
+        # STEP 6) Add the index of the log node to the JSON
+        returnJSON["log_node"] = specialLogNodeIndex
         return json.dumps(returnJSON)
-
-
-# checks if the node is a backbone node (does not belong to AST)
-def nodeIsBackbone(node, edges):
-    nextTokenEdges = list(
-        filter(lambda edge: edge.type == 2 and (edge.destinationId == node.id or edge.sourceId == node.id),
-               edges))
-    return len(nextTokenEdges) != 0
-
-
-def convertEdges(nodes, edges):
-    IdIndexDict = {}
-    for index, node in enumerate(nodes):
-        IdIndexDict[node.id] = index
-
-    returnDict = {}
-    for edge in edges:
-        type = EdgeType(edge.type).name
-        if type not in returnDict:
-            returnDict[type] = []
-        sourceIndex = IdIndexDict[edge.sourceId]
-        destinationIndex = IdIndexDict[edge.destinationId]
-        returnDict[type].append([sourceIndex, destinationIndex])
-
-    return returnDict
 
 
 if __name__ == "__main__":

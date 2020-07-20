@@ -53,7 +53,7 @@ def main():
                     fileDict[outputPathStr] = 1
 
                 outputPath = modifiedCorpusPath / Path(outputPathStr + f"{str(fileDict[outputPathStr])}.java.proto")
-                levelArray.append([str(outputPath), log["severity"]])
+                levelArray.append([str(outputPath), log["severity"],log["msg"]])
                 #levelDict[str(outputPath)] = log["severity"]
                 # open the input graph
                 with open(graphLocation, "rb") as graphFile:
@@ -66,7 +66,7 @@ def main():
             print("Finished writing graph files")
             with open(modifiedCorpusPath / "severities.json", "w") as outJSON:
                 json.dump(levelArray, outJSON)
-                print("Wrote severities.json. Contains each graph and it's corresponding log level.")
+                print("Wrote severities.json. Contains each graph location, it's corresponding log level and msg.")
 
 
 def modifyGraphFile(graphFile, rootId):
