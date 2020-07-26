@@ -51,6 +51,11 @@ def main():
             outputTrainLogs = outputFolder / "trainLogs.jsonl"
             outputValidationLogs = outputFolder / "validationLogs.jsonl"
             outputTestLogs = outputFolder / "testLogs.jsonl"
+
+            # Modify all logs if the flag is true.
+            if args.disallow_same_class is True:
+                logs = modifyLogsForSmokeTest(logs)
+
             # limit our log count
             if args.limit is not None:
                 logs = logs[0:args.limit]
@@ -85,17 +90,19 @@ def main():
                 print("If on linux, please run 'gzip -k trainLogs.jsonl && gzip -k validationLogs.jsonl && gzip -k "
                       "testLogs.jsonl'")
             if amlCTX is not None:
+                print("Uploading to azure Output")
                 amlCTX.upload_file(name="trainLogs.jsonl.gz", path_or_stream=str(outputFolder / "trainLogs.jsonl.gz"))
                 amlCTX.upload_file(name="validationLogs.jsonl.gz",
                                    path_or_stream=str(outputFolder / "validationLogs.jsonl.gz"))
                 amlCTX.upload_file(name="testLogs.jsonl.gz", path_or_stream=str(outputFolder / "testLogs.jsonl.gz"))
+                print("Done!")
 
 # Converts a set of logs using multiple threads. Writes the result to an output file
 def convertLogsAsync(logs, outputFile):
     # set up our Executor
     with concurrent.futures.ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         # Manual tqdm implementation so we have a progress bar
-        with tqdm(total=len(logs)) as progress:
+        with tqdm(total=len(logs),unit="graphs") as progress:
             futures = []
             for [graphLoc, severity, msg] in logs:
                 # here is where we convert the graph
@@ -126,6 +133,19 @@ def zipJSONL(location, targetName):
             shutil.copyfileobj(f_in, f_out)
 
 
+def modifyLogsForSmokeTest(logs):
+    logDict = {}
+    returnLogs = []
+    for log in logs:
+        locationNoNumber = re.sub("\d+", "", log[0])
+        if locationNoNumber in logDict:
+            pass
+        else:
+            logDict[locationNoNumber] = True
+            returnLogs.append(log)
+    return returnLogs
+
+
 def splitLogs(logs):
     if amlCTX is not None:
         def modifyLogs(log):
@@ -139,7 +159,7 @@ def splitLogs(logs):
     trainData, testData = np.split(logs, [int(args.training_percent * len(logs))])
     trainData, validationData = np.split(trainData, [int(1.0 - args.validation_percent * len(logs))])
 
-    # The following 2 blocks will automaticly ensure that two logs belonging to the same file are not
+    # The following 2 blocks will automatically ensure that two logs belonging to the same file are not
     # split across two sets (either train-validate or validate-test
     trainDataAdjusted = False
     validationDataAdjusted = False
@@ -255,6 +275,11 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--convert", help="GZip the generated jsonl files to prepare them for Graph2Sequence",
                         action="store_true")
     parser.add_argument("--aml", help="Indicate usage of Azure", action="store_true")
+    parser.add_argument("--disallow_same_class", help="At the start of execution, filter all logs to only allow one"
+                                                      "log per unique graph file (so if two logs both originate from "
+                                                      "the same file, only leave one existing. Done to generate a fully"
+                                                      "unique corpus, for a 'smoke' test.",
+                        action="store_true")
     args = parser.parse_args()
     inputJSON = Path(args.corpus_location) / "severities.json"
     outputFolder = Path(args.output_folder)
