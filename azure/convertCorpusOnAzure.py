@@ -56,6 +56,11 @@ def main():
         tags = {
             "logs": "MAX"
         }
+    if args.statement_generation:
+        params["-s"] = ""
+        tags["generationType"] = "Statement"
+    else:
+        tags["generationType"] = "Severity"
     # Set up the estimator object. Note the inputs element, it tells azure that corpus_location in params
     # will be a DataReference Object.
     est = Estimator(source_directory=source_directory,
@@ -94,5 +99,8 @@ if __name__ == "__main__":
                         type=str)
     parser.add_argument("-l", "--log_num", help="Number of logs to use from the entire dataset. Omit to run all",
                         type=int)
+    parser.add_argument("-s", "--statement_generation", help="If set, the output data is the training data for logging"
+                                                             "statement prediction, if false then it's for logging severity"
+                                                             "prediction", action="store_true")
     args = parser.parse_args()
     main()

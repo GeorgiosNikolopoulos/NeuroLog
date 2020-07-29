@@ -97,16 +97,17 @@ def main():
                 amlCTX.upload_file(name="testLogs.jsonl.gz", path_or_stream=str(outputFolder / "testLogs.jsonl.gz"))
                 print("Done!")
 
+
 # Converts a set of logs using multiple threads. Writes the result to an output file
 def convertLogsAsync(logs, outputFile):
     # set up our Executor
     with concurrent.futures.ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         # Manual tqdm implementation so we have a progress bar
-        with tqdm(total=len(logs),unit="graphs") as progress:
+        with tqdm(total=len(logs), unit="graphs") as progress:
             futures = []
-            for [graphLoc, severity, msg] in logs:
+            for [graphLoc, severity, msgToken] in logs:
                 # here is where we convert the graph
-                future = executor.submit(convertGraph, graphLoc, severity, msg)
+                future = executor.submit(convertGraph, graphLoc, severity, msgToken)
                 future.add_done_callback(lambda p: progress.update())
                 futures.append(future)
             results = []
@@ -114,12 +115,13 @@ def convertLogsAsync(logs, outputFile):
                 result = future.result()
                 results.append(result)
         # better way to handle async execution, but no progress bar!
-        #results = list(executor.map(convertFromGraphs, logs))
+        # results = list(executor.map(convertFromGraphs, logs))
     # write the output to our file, then clean up memory (automaticly) when the function is over.
     with open(outputFile, "w") as outFile:
         for jsonLog in results:
             outFile.write(jsonLog)
             outFile.write("\n")
+
 
 # part of the better way to handle async
 def convertFromGraphs(log):
@@ -155,7 +157,7 @@ def splitLogs(logs):
         logs = list(map(modifyLogs, logs))
 
     # Use numpy to split our arrays into the correct percentage
-    logs = np.array(logs)
+    logs = np.array(logs, dtype=object)
     trainData, testData = np.split(logs, [int(args.training_percent * len(logs))])
     trainData, validationData = np.split(trainData, [int(1.0 - args.validation_percent * len(logs))])
 
@@ -194,15 +196,14 @@ def splitLogs(logs):
     return trainData, validationData, testData
 
 
-def convertGraph(graphLoc, severity, msg):
+def convertGraph(graphLoc, severity, msgToken):
     # return JSON structure visualized.
     returnJSON = {
         "backbone_sequence": [],
         "node_labels": [],
         "edges": {},
         "method_name": [],
-        "msg" : "",
-        "log_node" : -1
+        "log_node": -1
     }
     with open(graphLoc, "rb") as graphFile:
         g = Graph()
@@ -211,7 +212,7 @@ def convertGraph(graphLoc, severity, msg):
         edges = g.edge
         # make a map of all the backbone nodes by looping over the edges and getting any node that
         # has a NEXT_TOKEN pointing to/from it
-        backboneNodes = { }
+        backboneNodes = {}
         for edge in edges:
             if edge.type == 2:
                 # overwrite, but thats ok!
@@ -244,11 +245,16 @@ def convertGraph(graphLoc, severity, msg):
             destinationIndex = IdIndexDict[edge.destinationId]
             returnDict[type].append([sourceIndex, destinationIndex])
         returnJSON["edges"] = returnDict
-        # STEP 4) Add the correct level that the AI should predict
-        returnJSON["method_name"].append(severity)
-        # STEP 5) Add the log msg to our JSON
-        returnJSON["msg"] = msg
-        # STEP 6) Add the index of the log node to the JSON
+        # STEP 4) If we are trying to predict the logging statement, add the tokenized msg to the
+        # prediction variable (method_name). Also put the logging level inside as well.
+        # If we are trying to predict the severity, add the severity to the prediction variable only.
+        if args.statement_generation:
+            returnJSON["method_name"] = msgToken
+            # TODO check if severity should be here
+            returnJSON["severity"] = severity
+        else:
+            returnJSON["method_name"].append(severity)
+        # STEP 5) Add the index of the log node to the JSON
         returnJSON["log_node"] = specialLogNodeIndex
         return json.dumps(returnJSON)
 
@@ -256,7 +262,7 @@ def convertGraph(graphLoc, severity, msg):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Converts the generated modified corpus into the jsonl.gz file accepted by ptgnn.")
-    parser.add_argument("--corpus_location", help="Location of the modified corpus JSON file.",
+    parser.add_argument("--corpus_location", help="Location of the modified corpus folder.",
                         type=str, required=True)
     parser.add_argument("--training_percent", help="The percent of data that will be the training data (ex. 0.8). The "
                                                    "other 20 will be testing data",
@@ -265,6 +271,9 @@ if __name__ == "__main__":
                                                      "(ex. a 0.8 0.2 will take 20%% of the TRAINING set, which is 80%% of "
                                                      "the whole data)",
                         type=float, required=True)
+    parser.add_argument("-s", "--statement_generation", help="If set, the output data is the training data for logging"
+                                                       "statement prediction, if false then it's for logging severity"
+                                                       "prediction", action="store_true")
     parser.add_argument("--debug", help="Generate a single json file from a single proto file, to check the script's "
                                         "functionality. Takes an index location of the JSON file",
                         type=int)
@@ -288,4 +297,8 @@ if __name__ == "__main__":
         from azureml.core.run import Run
 
         amlCTX = Run.get_context()
+    if args.statement_generation:
+        print("Starting generation of statement ML input set.")
+    else:
+        print("Starting generation of severity ML input set.")
     main()
