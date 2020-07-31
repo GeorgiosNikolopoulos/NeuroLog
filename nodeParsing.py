@@ -5,12 +5,14 @@ import graph_pb2
 from pathlib import Path
 import json
 from tqdm import tqdm
-import youtokentome as yttm
+#import youtokentome as yttm
+import sentencepiece as spm
 
 
 def main():
     model_path = "statement_prediction/statementPrediction.model"
-    bpe = yttm.BPE(model=model_path)
+    #bpe = yttm.BPE(model=model_path)
+    sp = spm.SentencePieceProcessor(model_file='statement_prediction/spmModel.model')
     # open the json
     with open(jsonPath, "rb") as jsonf:
         modifiedCorpusPath = Path("modified_corpus", ignore_errors=True, onerror=None)
@@ -57,8 +59,8 @@ def main():
 
                 outputPath = modifiedCorpusPath / Path(outputPathStr + f"{str(fileDict[outputPathStr])}.java.proto")
                 # tokenize the msg
-                tokenizedMsg = bpe.encode([log["msg"]], output_type=yttm.OutputType.SUBWORD)[0]
-
+                #tokenizedMsg = bpe.encode([log["msg"]], output_type=yttm.OutputType.SUBWORD)[0]
+                tokenizedMsg = sp.encode([log["msg"]], out_type=str)[0]
                 levelArray.append([str(outputPath), log["severity"],tokenizedMsg])
                 #levelDict[str(outputPath)] = log["severity"]
                 # open the input graph

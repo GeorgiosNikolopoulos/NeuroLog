@@ -251,7 +251,7 @@ def convertGraph(graphLoc, severity, msgToken):
         if args.statement_generation:
             returnJSON["method_name"] = msgToken
             # TODO check if severity should be here
-            returnJSON["severity"] = severity
+            #returnJSON["severity"] = severity
         else:
             returnJSON["method_name"].append(severity)
         # STEP 5) Add the index of the log node to the JSON
