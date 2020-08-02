@@ -8,13 +8,12 @@ import sentencepiece as spm
 trainDataPath = Path("trainData.txt")
 vocabSize = 5000
 charCover = 1.0
-symbolsToTokenize = ["(", ")", "[", "]", ",", ":", ".", "\"", "%"]
-
+symbolsToTokenize = []
 def createInputText():
     print("Generating train text...", end="")
     with open(inputPath) as jsonf:
         logs = json.load(jsonf)
-        with open(trainDataPath, "w") as trainData:
+        with open(trainDataPath, "a") as trainData:
             for log in logs:
                 trainData.write(log["msg"] + "\n")
     print("Done!")
@@ -49,6 +48,6 @@ if __name__ == "__main__":
                         type=str)
     args = parser.parse_args()
     inputPath = Path(args.input_json)
-    createInputText()
+    #createInputText()
     trainSenterpiece()
     #trainYouToken()
