@@ -8,7 +8,7 @@ from tqdm import tqdm
 #import youtokentome as yttm
 import sentencepiece as spm
 
-
+#TODO: Decide on tokenizer library
 def main():
     model_path = "statement_prediction/statementPrediction.model"
     #bpe = yttm.BPE(model=model_path)
