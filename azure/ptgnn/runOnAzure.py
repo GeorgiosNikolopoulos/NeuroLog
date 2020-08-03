@@ -39,6 +39,9 @@ def main():
             ("--quiet", "")
         ]
     )
+    # we are trying to predict statements
+    if args.predicting_statement:
+        script_params["--predicting-statement"] = ""
 
     with open("Dockerfile") as f:
         docker = DockerSection()
@@ -81,6 +84,7 @@ if __name__ == "__main__":
     parser.add_argument("test_file_name", help="The name of the test gz file. Pass the path to the json file", type=str)
     parser.add_argument("tags", help='A dictionary object with whatever info you want to add to the run as a tag. '
                                      'Please supply in the following format: {\"logs\":\"603\"}', type=json.loads)
-
+    parser.add_argument("--predicting_statement", help="Set this if you are trying to predict statements instead of "
+                                                       "severity", action="store_true")
     args = parser.parse_args()
     main()

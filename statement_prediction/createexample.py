@@ -24,7 +24,6 @@ def senterpiece():
                 tokenizedMsg = sp.encode([msg], out_type=str)[0]
                 totalTokens += len(tokenizedMsg)
                 output.write(f"{msg} ----> {str(tokenizedMsg)}\n")
-    print(totalTokens)
 
 if __name__ == "__main__":
     #youtoken()

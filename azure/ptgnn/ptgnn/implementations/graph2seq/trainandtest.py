@@ -13,6 +13,7 @@ Options:
     --quiet                    Do not show progress bar.
     -h --help                  Show this screen.
     --debug                    Enable debug routines. [default: False]
+    --predicting-statement     Set this if you are trying to predict statements instead of severity
 """
 
 from docopt import docopt
