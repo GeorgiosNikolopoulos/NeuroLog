@@ -92,7 +92,13 @@ def run(arguments):
                     dropout_rate=dropout_rate,
                 ),
             ]
-
+        # Adjust the vocab count threshold if we are predicting statements, leave at 5 (default) otherwise.
+        predictingStatement = arguments.get("--predicting-statement", None)
+        if predictingStatement:
+            vocabulary_count_threshold = 0
+        else:
+            vocabulary_count_threshold = 5
+        print(f"Using {vocabulary_count_threshold} vocab threshold")
         model = Graph2Seq(
             gnn_model=GraphNeuralNetworkModel(
                 node_representation_model=StrElementRepresentationModel(
@@ -101,7 +107,8 @@ def run(arguments):
                 message_passing_layer_creator=create_mp_layers,
             ),
             decoder=GruCopyingDecoderModel(
-                hidden_size=128, embedding_size=256, memories_hidden_dim=embedding_size
+                hidden_size=128, embedding_size=256, memories_hidden_dim=embedding_size,
+                vocabulary_count_threshold=vocabulary_count_threshold
             ),
         )
 

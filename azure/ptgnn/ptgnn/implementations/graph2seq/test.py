@@ -54,8 +54,14 @@ def run(arguments):
             smoother = SmoothingFunction()
             reference = [actual_data["method_name"]]
             candidate = res_tokens
-            bleuScore4 = sentence_bleu(reference, candidate, smoothing_function=smoother.method4)
-            bleuScore1 = sentence_bleu(reference, candidate, weights=(1, 0, 0, 0), smoothing_function=smoother.method4)
+            #Anything less than 2 will cause the smoother function to crash (division by 0). Use method 0, no smoothing
+            #if this occurs.
+            if(len(candidate) <= 1 or len(reference) <= 1):
+                smoothingFunction = smoother.method0
+            else:
+                smoothingFunction = smoother.method4
+            bleuScore4 = sentence_bleu(reference, candidate, smoothing_function=smoothingFunction)
+            bleuScore1 = sentence_bleu(reference, candidate, weights=(1, 0, 0, 0), smoothing_function=smoothingFunction)
             bleuScores1.append(bleuScore1)
             bleuScores4.append(bleuScore4)
 
