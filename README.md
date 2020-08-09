@@ -31,10 +31,12 @@ Azure ML CPU instance.
 You can either use the script linked here, or download ptgnn from github and use it directly. Additionally, you may 
 train the model using AzureML by using [runOnAzure](azure/ptgnn/runOnAzure.py).
 ### How to generate a message prediction model
-To generate a model that attempts to predict the log message, the exact same steps need to be followed with two variations:
-* Pass the relevant parameters to [convertCorpusForML](convertCorpusForML.py) and 
-[trainandtest](azure/ptgnn/ptgnn/implementations/graph2seq/trainandtest.py)
-* Use the local, modified version of ptgnn. This version is better optimized for message prediction and also calculates
+To generate a model that attempts to predict the log message, the exact same steps need to be followed with three variations:
+1. Train a tokenizer with [trainTokenizer](statement_prediction/trainTokenizer.py). You can gather your own train set or,
+alternatively, point [gatherSourceLogs](statement_prediction/gatherSourceLogs.py) to a root folder containing many Java projects.
+2. Pass the relevant parameters to [convertCorpusForML](convertCorpusForML.py) and 
+[trainandtest](azure/ptgnn/ptgnn/implementations/graph2seq/trainandtest.py).
+3. Use the local, modified version of ptgnn. This version is better optimized for message prediction and also calculates
 bleu scores.
 
 Please note that message prediction may not be successful out of the box. For more information read the linked paper.
