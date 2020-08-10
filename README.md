@@ -34,6 +34,7 @@ train the model using AzureML by using [runOnAzure](azure/ptgnn/runOnAzure.py).
 To generate a model that attempts to predict the log message, the exact same steps as the severity model need to be followed with three variations:
 1. Train a tokenizer with [trainTokenizer](statement_prediction/trainTokenizer.py). You can gather your own train text or,
 alternatively, point [gatherSourceLogs](statement_prediction/gatherSourceLogs.py) to a root folder containing many Java projects.
+A tokenizer model already exists, but this model is far from optimal due to a lack of data.
 2. Pass the relevant parameters to [convertCorpusForML](convertCorpusForML.py) and 
 [trainandtest](azure/ptgnn/ptgnn/implementations/graph2seq/trainandtest.py).
 3. Use the local, modified version of ptgnn. This version is better optimized for message prediction and also calculates
