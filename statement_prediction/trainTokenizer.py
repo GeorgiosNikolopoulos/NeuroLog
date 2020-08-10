@@ -6,8 +6,7 @@ import youtokentome as yttm
 import sentencepiece as spm
 
 
-vocabSize = 5000
-charCover = 1.0
+
 symbolsToTokenize = []
 
 def trainYouToken():
@@ -40,6 +39,10 @@ if __name__ == "__main__":
                     "to ptgnn.")
     parser.add_argument("train_file", help="Location of the train data txt file",
                         type=str)
+    parser.add_argument("vocab_size", help="Vocabulary size to pass to senterpiece.", type=int)
+    parser.add_argument("char_cover", help="Character coverage to pass to senterpiece, between 0.0 and 1.0",type=float)
     args = parser.parse_args()
     trainDataPath = Path(args.train_file)
+    vocabSize = args.vocab_size
+    charCover = args.char_cover
     trainSenterpiece()
