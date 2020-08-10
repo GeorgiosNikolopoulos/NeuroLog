@@ -27,7 +27,7 @@ six==1.15.0
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch==1.5.1+cpu
 --find-links https://pytorch-geometric.com/whl/torch-1.5.0.html
-torch-scatter==2.0.4
+torch-scatter==2.0.4+cpu
 torchvision==0.6.1+cpu
 tqdm==4.47.0
 typing-extensions==3.7.4.2
@@ -35,3 +35,5 @@ urllib3==1.25.9
 azureml~=0.2.7
 argparse~=1.4.0
 youtokentome~=1.0.6
+nltk~=3.5
+pandas~=1.0.5

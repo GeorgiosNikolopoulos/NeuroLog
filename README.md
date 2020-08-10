@@ -41,6 +41,8 @@ A tokenizer model already exists, but this model is far from optimal due to a la
 bleu scores. AzureML usage is supported via [runOnAzure](azure/ptgnn/runOnAzure.py) and its relevant parameter.
 
 Please note that message prediction may not be successful out of the box. For more information read the linked paper.
+Also, use train.py and test.py directly if training on your local machine. Avoid using trainandtest.This is due to some
+internal python issue with ptgnn's docopt usage, when predicting statements on a local machine.
 # Explanation of Files and Folders
 Please use -h with any script for more information.
 
