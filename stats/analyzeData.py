@@ -22,16 +22,28 @@ def main():
     print(f"Max msg length: {df['msgLength'].max()}")
     
     print("Severity levels follow")
-    severityFrame = orderDataFrameBySeverity(df.groupby(["severity"]).count()["msg"])
-    print(severityFrame.to_string())
-    
-    ax = severityFrame.plot(kind="bar")
-    ax.set_xlabel("Severity")
-    ax.set_ylabel("Logs")
-    
-    df[df["msgLength"] <= 200].plot.hist(by="msgLength")
+    print(orderDataFrameBySeverity(df.groupby(["severity"]).count()["msg"]).to_string())
+
+    ax = df[df["msgLength"] <= 200].hist(column="msgLength",grid=False, bins=12, zorder=2, rwidth=0.9)[0][0]
+
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.set_title("")
+    ax.set_xlabel("Message length (chars)", labelpad=20, weight='bold', size=10)
+    ax.set_ylabel("Logs", labelpad=20, weight="bold", size=10)
+
+    vals = ax.get_yticks()
+    for tick in vals:
+        ax.axhline(y=tick, linestyle='dashed', alpha=0.4, color='#eeeeee', zorder=1)
+
     plt.show()
-    
+
+    containMethod = df[df["msg"].str.contains("\..*\(.*\)",regex=True)]
+    print(f"Number of logs that contain methods: {len(containMethod)}")
+
+    containTextOnly = df[df["msg"].str.contains('"[a-z:=()\- ,A-Z]+"' ,regex=True)]
+    print(f"Number of logs that contain text only: {len(containTextOnly)}")
+
     print("Msg average length per severity follows")
     print(df.groupby(["severity"])["msgLength"].mean().round(2).to_string())
     
