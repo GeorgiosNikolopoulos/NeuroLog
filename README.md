@@ -1,10 +1,9 @@
 # NeuroLog 
 NeuroLog is a set of tools that enable the creation and training of a machine learning model capable of
-predicting the logging severity of a log statement, with an example implementation having an 85% accuracy. Additionally, NeuroLog contains code to attempt to predict 
+predicting the logging severity of a log statement, with an example implementation having a 97% accuracy. Additionally, NeuroLog contains code to attempt to predict 
 the logging message of a statement. For more details, please read the following [paper](TODO:LINK).
 NeurLog was created by Georgios Nikolopoulos with assistance by Earl Barr and Miltos Alamanis
 for his dissertation at UCL. NeuroLog heavily relies on and uses [ptgnn](https://github.com/microsoft/ptgnn).
-This is work in progress.
 ## Installation
 NeuroLog requires Python 3. Linux or similar OS is reccomended, but not required.
 Usage of python virtual environment advised. To install all dependencies simply run: 
