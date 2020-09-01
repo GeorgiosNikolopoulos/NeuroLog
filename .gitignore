@@ -2,10 +2,16 @@
 __pycache__/
 venv/
 modified_corpus/
+results/
+#ptgnn/
+azure/ptgnn/authentication.json
+azure/ptgnn/azureinfo.json
+azure/ptgnn/runOnAzureBroken.py
+azure/uploadToAzure.py
 *.pyc
 experiment.py
 retrieveLogsExperimental.py
 results/result.json
-test.py
+developmentest.py
 *.proto
 *.dot

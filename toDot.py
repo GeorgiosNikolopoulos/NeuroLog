@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generates a dot file for graph visualization. NOTE: this is not bug-free,"
                     "it has been written as a quick and easy visualization tool, do not be surpised if the output is broken")
-    parser.add_argument("graph_file", help="Location of graph file to convert. Please use full path",
+    parser.add_argument("graph_file", help="Location of graph file to convert.",
                         type=str)
     args = parser.parse_args()
     graphLocation = Path(args.graph_file)

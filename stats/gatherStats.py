@@ -55,18 +55,25 @@ def calculateLevelStatistics(logs):
     print("-----------------------------------------------")
     print("              LEVEL STATS FOLLOW               ")
     print("-----------------------------------------------")
-    print("Trace logs detected: " + str(len(traceLogs)) + ". Average msg length for them: " + str(
-        round(mean(convertToListOfMsgLength(traceLogs)), 2)))
-    print("Debug logs detected: " + str(len(debugLogs)) + ". Average msg length for them: " + str(
-        round(mean(convertToListOfMsgLength(debugLogs)), 2)))
-    print("Info logs detected:  " + str(len(infoLogs)) + ". Average msg length for them: " + str(
-        round(mean(convertToListOfMsgLength(infoLogs)), 2)))
-    print("Warn logs detected:  " + str(len(warnLogs)) + ". Average msg length for them: " + str(
-        round(mean(convertToListOfMsgLength(warnLogs)), 2)))
-    print("Error logs detected: " + str(len(errorLogs)) + ". Average msg length for them: " + str(
-        round(mean(convertToListOfMsgLength(errorLogs)), 2)))
-    print("Fatal logs detected: " + str(len(fatalLogs)) + ". Average msg length for them: " + str(
-        round(mean(convertToListOfMsgLength(fatalLogs)), 2)))
+    print(
+        f"Trace logs detected: {str(len(traceLogs))}. These represent {str(round(len(traceLogs) / len(logs)* 100,2) )}"
+        f"% of all logs. Average msg length for them: {str(round(mean(convertToListOfMsgLength(traceLogs)), 2))}.")
+    print(
+        f"Debug logs detected: {str(len(debugLogs))}. These represent {str(round(len(debugLogs) / len(logs) * 100, 2))}"
+        f"% of all logs. Average msg length for them: {str(round(mean(convertToListOfMsgLength(debugLogs)), 2))}.")
+    print(
+        f"Info logs detected: {str(len(infoLogs))}. These represent {str(round(len(infoLogs) / len(logs)* 100, 2))}"
+        f"% of all logs. Average msg length for them: {str(round(mean(convertToListOfMsgLength(infoLogs)), 2))}.")
+    print(
+        f"Warn logs detected: {str(len(warnLogs))}. These represent {str(round(len(warnLogs) / len(logs)* 100, 2))}"
+        f"% of all logs. Average msg length for them: {str(round(mean(convertToListOfMsgLength(warnLogs)), 2))}.")
+    print(
+        f"Error logs detected: {str(len(errorLogs))}. These represent {str(round(len(errorLogs) / len(logs)* 100, 2))}"
+        f"% of all logs. Average msg length for them: {str(round(mean(convertToListOfMsgLength(errorLogs)), 2))}.")
+    print(
+        f"Fatal logs detected: {str(len(fatalLogs))}. These represent {str(round(len(fatalLogs) / len(logs)* 100, 2))}"
+        f"% of all logs. Average msg length for them: {str(round(mean(convertToListOfMsgLength(fatalLogs)), 2))}.")
+
 
 
 def calculateMsgStatistics(logs):
